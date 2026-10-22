@@ -1,0 +1,24 @@
+2026-10-22 16:31:27,214 [INFO] httpx: HTTP Request: GET https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getMe "HTTP/1.1 200 OK"
+2026-10-22 16:31:27,214 [INFO] dota_match_bot: Telegram-бот @BflyDotaBot подключён
+2026-10-22 16:31:27,495 [INFO] dota_bot.detectors.foreground: Слежу за окнами: dota2.exe
+2026-10-22 16:31:27,495 [INFO] dota_bot.detectors.base: Детектор foreground запущен
+2026-10-22 16:31:27,496 [INFO] dota_bot.detectors.base: Детектор gsi запущен
+2026-10-22 16:31:27,496 [INFO] dota_bot.detectors.steam: Опрос Steam Web API для аккаунта 76561198349584413
+2026-10-22 16:31:27,496 [INFO] dota_bot.detectors.base: Детектор steam запущен
+2026-10-22 16:31:27,497 [INFO] dota_bot.detectors.opendota: Слежу за матчами через OpenDota (аккаунт 389318685)
+2026-10-22 16:31:27,497 [INFO] dota_bot.detectors.base: Детектор opendota запущен
+2026-10-22 16:31:27,498 [INFO] dota_bot.service: Активных детекторов: 4
+2026-10-22 16:31:27,498 [INFO] dota_bot.detectors.gsi: GSI-сервер слушает http://127.0.0.1:9977
+2026-10-22 16:31:27,783 [INFO] dota_match_bot: Бот запущен, ожидаю матчи
+2026-10-22 16:31:27,944 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 16:31:27,945 [INFO] dota_bot.detectors.opendota: OpenDota: зафиксирован последний матч 9056174940
+2026-10-22 16:31:28,033 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 16:31:28,187 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getMe "HTTP/1.1 200 OK"
+2026-10-22 16:31:28,338 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/deleteWebhook "HTTP/1.1 200 OK"
+2026-10-22 16:31:28,339 [INFO] telegram.ext.Application: Application started
+2026-10-22 16:31:38,580 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 16:31:38,651 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 16:31:48,755 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 16:31:49,228 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 16:31:58,856 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 16:31:59,762 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"

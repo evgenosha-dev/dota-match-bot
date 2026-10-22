@@ -1,0 +1,46 @@
+# конфигурация dota-match-bot
+{
+  "telegram": {
+    "bot_token": "",
+    "chat_id": "",
+    "notify_match_found": true,
+    "notify_match_finished": true,
+    "request_timeout_seconds": 10
+  },
+  "foreground": {
+    "enabled": true,
+    "process_names": ["dota2.exe"],
+    "poll_interval_ms": 250,
+    "confirmation_delay_ms": 750,
+    "cooldown_seconds": 120
+  },
+  "remote_control": {
+    "enabled": false,
+    "process_name": "dota2.exe",
+    "focus_window": true
+  },
+  "gsi": {
+    "enabled": false,
+    "host": "127.0.0.1",
+    "port": 9977,
+    "dota_dir": null,
+    "write_config": false,
+    "config_filename": "gamestate_integration_dota_match_bot.cfg"
+  },
+  "steam": {
+    "enabled": false,
+    "api_key": "",
+    "steamid64": null,
+    "account_id": null,
+    "poll_interval_seconds": 10,
+    "base_url": "https://api.steampowered.com"
+  },
+  "opendota": {
+    "enabled": false,
+    "base_url": "https://api.opendota.com/api",
+    "poll_interval_seconds": 60
+  },
+  "dedupe_window_seconds": 45,
+  "state_path": "state.json",
+  "log_level": "INFO"
+}
