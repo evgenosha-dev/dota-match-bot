@@ -13,7 +13,7 @@ from .detectors.foreground import ForegroundDetector
 from .detectors.gsi import GsiDetector
 from .detectors.opendota import OpenDotaDetector
 from .detectors.steam import SteamDetector
-from .detectors.acceptui import AcceptScreenDetector
+from .detectors.acceptwin import AcceptUiDetector
 from .formatting import accept_keyboard, format_event, format_match_found
 from .heroes import HeroCatalog
 from .models import EventType, MatchEvent
@@ -49,6 +49,18 @@ class MatchService:
     # ── детекторы ──
     def build_detectors(self) -> None:
         cfg = self.config
+        if sys.platform == "win32":
+            try:
+                self._detectors.append(
+                    AcceptUiDetector(
+                        self._queue,
+                        process_names=cfg.foreground.process_names,
+                        poll_interval_ms=250,
+                        cooldown_seconds=90,
+                    )
+                )
+            except Exception:
+                log.debug("Не удалось добавить acceptwin детектор", exc_info=True)
         if cfg.foreground.enabled:
             self._detectors.append(
                 ForegroundDetector(
@@ -59,18 +71,6 @@ class MatchService:
                     cooldown_seconds=cfg.foreground.cooldown_seconds,
                 )
             )
-        if sys.platform == "win32":
-            try:
-                self._detectors.append(
-                    AcceptScreenDetector(
-                        self._queue,
-                        process_names=cfg.foreground.process_names,
-                        poll_interval_ms=400,
-                        cooldown_seconds=90,
-                    )
-                )
-            except Exception:
-                log.debug("Не удалось добавить acceptui детектор", exc_info=True)
         if cfg.gsi.enabled:
             self._detectors.append(GsiDetector(self._queue, host=cfg.gsi.host, port=cfg.gsi.port))
         if cfg.steam.enabled and cfg.resolved_steamid64:
