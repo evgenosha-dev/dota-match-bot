@@ -1,7 +1,7 @@
 # конфигурация dota-match-bot
 {
   "telegram": {
-    "bot_token": "",
+    "bot_token": "8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo",
     "chat_id": "",
     "notify_match_found": true,
     "notify_match_finished": true,

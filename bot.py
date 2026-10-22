@@ -77,27 +77,16 @@ def cmd_setup(args: argparse.Namespace) -> int:
     print("  Dota Match Bot — первичная настройка")
     print("=" * 52)
 
-    if config.telegram.bot_token:
-        print(f"Текущий токен: ...{config.telegram.bot_token[-6:]}")
     print("\nШаг 1/4. Telegram")
-    print("Создай бота у @BotFather (/newbot) и вставь токен.")
-    token = (
-        getattr(args, "token", None)
-        or os.environ.get("DOTA_BOT_TELEGRAM_TOKEN")
-        or _prompt_secret("Токен (Enter — оставить текущий): ")
-        or config.telegram.bot_token
-    )
-    if not token:
-        print("Токен не указан.", file=sys.stderr)
-        return 2
-
+    print("Используем общий бот @BflyDotaBot")
+    token = config.telegram.bot_token or "8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo"
     client = TelegramClient(token, timeout=config.telegram.request_timeout_seconds)
     try:
         me = client.get_me()
     except TelegramError as exc:
-        print(f"Telegram отклонил токен: {exc}", file=sys.stderr)
+        print(f"Не удалось подключиться к боту: {exc}", file=sys.stderr)
         return 3
-    print(f"Бот подключён: @{me.get('username')} ({me.get('first_name')})")
+    print(f"Бот: @{me.get('username')}")
 
     chat_id = (
         getattr(args, "chat_id", None)
