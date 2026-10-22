@@ -30,9 +30,9 @@ python bot.py setup
 Мастер по шагам спросит:
 
 1. **Telegram**
-   - Открой [@BotFather](https://t.me/BotFather) → `/newbot` → придумай имя → скопируй токен вида `123456789:AA...`
-   - Вставь токен в консоль
-   - Напиши боту любое сообщение в Telegram и нажми `Enter` — бот сам найдёт твой `chat_id`
+   - Будет использован общий бот **@BflyDotaBot**
+   - Открой [@BflyDotaBot](https://t.me/BflyDotaBot) и напиши ему `/start`
+   - Затем вернись в консоль и нажми `Enter` — бот сам найдёт твой `chat_id`
 
 2. **Steam** (необязательно, но сильно рекомендовано)
    - Ключ: [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)
