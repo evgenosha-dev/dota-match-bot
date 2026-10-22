@@ -56,12 +56,13 @@ class ForegroundStateMachine:
             self._previous_was_target = False
             return False
 
+        if self._previous_was_target:
+            self._pending_since = None
+            return False
+
         if self._pending_since is None:
             self._pending_since = now
-            self._streak_from_target = self._previous_was_target
-
-        if self._streak_from_target:
-            return False
+            self._streak_from_target = False
 
         if (now - self._pending_since) * 1000 < self._confirmation_delay_ms:
             return False

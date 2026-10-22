@@ -174,6 +174,7 @@ def test_found_is_suppressed_until_match_starts(tmp_path: Path):
             victory=True,
         )
     )
+    service._match_started_at = time.time() - 120
     service.handle_event(found_event())
 
     assert len(telegram.sent) == 2
