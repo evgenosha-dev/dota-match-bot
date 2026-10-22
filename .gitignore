@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+config.json
+state.json
+state.json.tmp
+cache/
+
+build/
+dist/
+*.spec
