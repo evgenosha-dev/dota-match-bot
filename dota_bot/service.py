@@ -118,8 +118,8 @@ class MatchService:
             log.debug("Пропущено уведомление о найденном матче: уже в матче")
             return
         now = time.time()
-        if self._match_started_at and now - self._match_started_at < 60:
-            log.debug("Пропущено: недавно был матч")
+        if self._match_started_at and now - self._match_started_at < 300:
+            log.debug("Пропущено: матч был недавно")
             return
         if self._last_found_at and now - self._last_found_at > FOUND_EXPIRE_SECONDS:
             self.state.clear("match_found")
@@ -268,8 +268,12 @@ class MatchService:
             log.info("Уведомления выключены — событие проигнорировано")
             return
         if event.type is EventType.MATCH_FOUND:
-            if self.config.telegram.notify_match_found:
-                self._handle_match_found(event)
+            if not self._in_match and (not self._match_started_at or time.time() - self._match_started_at > 300):
+                if self.config.telegram.notify_match_found:
+                    self._handle_match_found(event)
+            else:
+                log.debug("MATCH_FOUND игнорирован")
+            return
         elif event.type is EventType.MATCH_STARTED:
             if self.config.telegram.notify_match_found:
                 self._handle_match_started(event)

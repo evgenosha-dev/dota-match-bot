@@ -2692,3 +2692,295 @@
 2026-10-22 19:51:53,328 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
 2026-10-22 19:51:58,173 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
 2026-10-22 19:52:03,436 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:52:06,942 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 19:52:08,704 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:52:13,541 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:52:19,304 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:52:23,655 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:52:29,796 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:52:33,763 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:52:40,396 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:52:43,867 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:52:50,860 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:52:53,974 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:53:01,442 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:53:04,089 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:53:07,353 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 19:53:11,926 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:53:14,210 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:53:22,529 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:53:24,314 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:53:32,980 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:53:34,421 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:53:43,563 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:53:44,528 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:53:54,031 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:53:54,637 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:54:04,650 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:54:04,745 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:54:07,779 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 19:54:14,866 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:54:15,087 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:54:24,980 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:54:25,718 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:54:34,231 [INFO] dota_bot.detectors.foreground: Окно Dota 2 вышло на передний план — возможно найден матч
+2026-10-22 19:54:34,231 [INFO] dota_bot.service: Событие match_found от детектора foreground
+2026-10-22 19:54:34,904 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/sendMessage "HTTP/1.1 200 OK"
+2026-10-22 19:54:35,085 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:54:36,254 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:54:45,198 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:54:47,007 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:54:55,302 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:54:57,546 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:55:05,411 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:55:08,117 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:55:08,295 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 19:55:15,519 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:55:18,655 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:55:19,518 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 409 Conflict"
+2026-10-22 19:55:19,520 [ERROR] telegram.ext.Application: No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_utils\networkloop.py", line 161, in network_retry_loop
+    await do_action()
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_utils\networkloop.py", line 154, in do_action
+    action_cb_task.result()
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_updater.py", line 340, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_extbot.py", line 680, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\_bot.py", line 4767, in get_updates
+    await self._post(
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\_bot.py", line 712, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_extbot.py", line 378, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\_bot.py", line 741, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\request\_baserequest.py", line 198, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\request\_baserequest.py", line 375, in _request_wrapper
+    raise exception
+telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-10-22 19:55:24,160 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 409 Conflict"
+2026-10-22 19:55:24,161 [ERROR] telegram.ext.Application: No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_utils\networkloop.py", line 161, in network_retry_loop
+    await do_action()
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_utils\networkloop.py", line 154, in do_action
+    action_cb_task.result()
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_updater.py", line 340, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_extbot.py", line 680, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\_bot.py", line 4767, in get_updates
+    await self._post(
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\_bot.py", line 712, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\ext\_extbot.py", line 378, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\_bot.py", line 741, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\request\_baserequest.py", line 198, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Evgeniy\AppData\Local\Programs\Python\Python312\Lib\site-packages\telegram\request\_baserequest.py", line 375, in _request_wrapper
+    raise exception
+telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-10-22 19:55:29,227 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:55:35,771 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:55:39,660 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:55:45,903 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:55:50,190 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:55:56,011 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:56:00,614 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:56:06,122 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:56:08,711 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 19:56:11,278 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:56:16,246 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:56:21,764 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:56:26,355 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:56:32,345 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:56:36,459 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:56:42,809 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:56:46,562 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:56:53,336 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:56:56,675 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:57:04,001 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:57:06,789 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:57:09,148 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 19:57:14,478 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:57:16,896 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:57:25,064 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:57:26,999 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:57:35,587 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:57:37,118 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:57:46,176 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:57:47,224 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:57:56,620 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:57:57,329 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:58:07,228 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:58:07,454 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:58:09,560 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 19:58:17,568 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:58:17,792 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:58:27,684 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:58:28,450 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:58:37,798 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:58:38,890 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:58:47,901 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:58:49,474 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:58:58,013 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:58:59,983 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:59:08,116 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:59:09,980 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 19:59:10,621 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:59:18,224 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:59:21,086 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:59:28,337 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:59:31,763 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:59:38,452 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:59:42,233 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:59:48,553 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 19:59:48,806 [INFO] dota_bot.detectors.foreground: Окно Dota 2 вышло на передний план — возможно найден матч
+2026-10-22 19:59:48,806 [INFO] dota_bot.service: Событие match_found от детектора foreground
+2026-10-22 19:59:49,415 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/sendMessage "HTTP/1.1 200 OK"
+2026-10-22 19:59:52,846 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 19:59:58,661 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:00:03,316 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:00:08,763 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:00:10,695 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:00:13,884 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:00:16,155 [INFO] dota_bot.detectors.gsi: GSI: состояние игры DOTA_GAMERULES_STATE_POST_GAME (match_id=9056451618)
+2026-10-22 20:00:16,155 [INFO] dota_bot.service: Событие match_finished от детектора gsi
+2026-10-22 20:00:16,723 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/sendMessage "HTTP/1.1 200 OK"
+2026-10-22 20:00:18,875 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:00:24,366 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:00:28,985 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:00:35,044 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:00:39,086 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:00:45,614 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:00:49,246 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:00:56,222 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:00:59,421 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:01:06,779 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:01:09,526 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:01:11,279 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:01:17,502 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:01:19,637 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:01:27,990 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:01:29,743 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:01:38,580 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:01:39,856 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:01:49,082 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:01:49,970 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:01:59,696 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:02:00,084 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:02:10,188 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:02:10,262 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:02:11,856 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:02:20,299 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:02:20,953 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:02:30,421 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:02:31,445 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:02:40,522 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:02:42,108 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:02:50,625 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:02:52,730 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:03:00,739 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:03:03,358 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:03:10,841 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:03:12,620 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:03:14,226 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:03:20,969 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:03:24,798 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:03:31,110 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:03:35,288 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:03:41,213 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:03:45,918 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:03:51,318 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:03:56,351 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:04:01,423 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:04:06,942 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:04:11,525 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:04:13,211 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:04:17,393 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:04:21,641 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:04:27,937 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:04:31,746 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:04:38,364 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:04:41,853 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:04:48,964 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:04:51,958 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:04:59,374 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:05:02,061 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:05:09,964 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:05:12,165 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:05:13,743 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:05:20,390 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:05:22,281 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:05:31,004 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:05:32,414 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:05:41,439 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:05:42,529 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:05:52,296 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:05:52,661 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:06:02,738 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:06:02,773 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:06:12,877 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:06:13,323 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:06:14,163 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:06:22,988 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:06:23,798 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:06:33,097 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:06:34,359 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:06:43,205 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:06:44,971 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:06:53,316 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:06:55,606 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:07:03,427 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:07:06,121 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:07:13,537 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:07:14,587 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:07:16,735 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:07:23,651 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:07:27,421 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:07:33,755 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:07:38,035 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:07:43,860 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:07:48,680 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:07:53,977 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:07:59,221 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:08:04,111 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:08:09,859 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:08:14,224 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:08:15,006 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:08:20,346 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:08:24,367 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:08:30,931 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:08:34,469 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:08:41,455 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:08:44,576 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:08:52,119 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:08:54,679 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:09:02,623 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:09:04,783 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:09:13,233 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:09:14,885 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:09:15,420 [INFO] httpx: HTTP Request: GET https://api.opendota.com/api/players/389318685/recentMatches "HTTP/1.1 200 OK"
+2026-10-22 20:09:23,675 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:09:25,004 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:09:34,417 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:09:35,111 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
+2026-10-22 20:09:45,090 [INFO] httpx: HTTP Request: GET https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=96A82839D4C5A33863C15D2DF1FF2778&steamids=76561198349584413 "HTTP/1.1 200 OK"
+2026-10-22 20:09:45,221 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo/getUpdates "HTTP/1.1 200 OK"
