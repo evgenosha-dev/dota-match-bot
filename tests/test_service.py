@@ -146,6 +146,8 @@ def test_found_is_suppressed_until_match_starts(tmp_path: Path):
     service.config.dedupe_window_seconds = 0
     service.config.telegram.notify_match_finished = False
 
+    service._match_started_at = None
+    service._in_match = False
     service.handle_event(found_event())
     service.handle_event(found_event())
     service.handle_event(found_event("steam"))
@@ -174,7 +176,7 @@ def test_found_is_suppressed_until_match_starts(tmp_path: Path):
             victory=True,
         )
     )
-    service._match_started_at = time.time() - 120
+    service._match_started_at = time.time() - 600
     service.handle_event(found_event())
 
     assert len(telegram.sent) == 2
