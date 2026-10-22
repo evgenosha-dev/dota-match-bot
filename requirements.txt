@@ -1,2 +1,6 @@
 python-telegram-bot==22.8
 httpx==0.28.1
+opencv-python==4.12.0.88
+numpy==2.2.6
+pyautogui==0.9.54
+Pillow==12.1.0
