@@ -118,6 +118,9 @@ class MatchService:
             log.debug("Пропущено уведомление о найденном матче: уже в матче")
             return
         now = time.time()
+        if self._match_started_at and now - self._match_started_at < 60:
+            log.debug("Пропущено: недавно был матч")
+            return
         if self._last_found_at and now - self._last_found_at > FOUND_EXPIRE_SECONDS:
             self.state.clear("match_found")
             self._last_found_at = None
@@ -206,7 +209,7 @@ class MatchService:
 
     def _handle_match_finished(self, event: MatchEvent) -> None:
         self._in_match = False
-        self._match_started_at = None
+        self._match_started_at = time.time()
         self._last_found_at = None
         self._found_match_id = None
         self.state.clear("match_found")
@@ -272,7 +275,7 @@ class MatchService:
                 self._handle_match_started(event)
         elif event.type is EventType.MATCH_FINISHED:
             self._in_match = False
-            self._match_started_at = None
+            self._match_started_at = time.time()
             self._last_found_at = None
             self._found_match_id = None
             self.state.clear("match_found")
