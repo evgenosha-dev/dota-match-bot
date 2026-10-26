@@ -122,14 +122,20 @@ def cmd_setup(args: argparse.Namespace) -> int:
         "telegram": {"bot_token": token, "chat_id": str(chat_id)}
     }
 
-    print("\nШаг 2/4. Steam (необязательно)")
-    print("Ключ: https://steamcommunity.com/dev/apikey — нужен для статуса «в игре».")
+    print("\nШаг 2/4. Steam")
+    print("Ключ: https://steamcommunity.com/dev/apikey — обязателен для статуса «в игре».")
+    print("Вставка из буфера работает: Ctrl+V.")
     api_key = (
         getattr(args, "steam_api_key", None)
         or os.environ.get("DOTA_BOT_STEAM_API_KEY")
-        or _prompt_secret("Steam API key (Enter — пропустить): ")
         or config.steam.api_key
     )
+    while not api_key:
+        entered = _prompt_secret("Steam API key: ")
+        if entered:
+            api_key = entered
+        else:
+            print("Ключ обязателен — вставь его сюда (Ctrl+V) и нажми Enter.")
     profile = (
         getattr(args, "steam_id", None)
         or os.environ.get("DOTA_BOT_STEAM_ID64")
@@ -337,14 +343,10 @@ def _prompt(text: str) -> str:
 
 
 def _prompt_secret(text: str) -> str:
-    try:
-        import getpass
-
-        return getpass.getpass(text).strip()
-    except (EOFError, KeyboardInterrupt):
-        return ""
-    except Exception:
-        return _prompt(text)
+    # getpass на Windows читает клавиши через msvcrt и не даёт вставить
+    # текст из буфера обмена (Ctrl+V не работает), поэтому используем
+    # обычный input — вставка работает, ключ при этом виден на экране.
+    return _prompt(text)
 
 
 def connect_notifier(config: BotConfig, attempts: int = 3) -> TelegramClient:

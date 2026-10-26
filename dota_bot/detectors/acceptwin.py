@@ -13,12 +13,15 @@ log = logging.getLogger(__name__)
 
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 
-ACCEPT_TEXTS = (
-    "принять",
-    "accept",
-    "принять матч",
-    "accept match",
-)
+# Зелёная кнопка «Принять» в HSV (Dota 2: насыщенный зелёный).
+GREEN_HSV_LOWER = (35, 80, 80)
+GREEN_HSV_UPPER = (90, 255, 255)
+# Доля от ширины окна: кнопка принятия занимает примерно 12–35% ширины
+# и 4–14% высоты. Пороги масштабируются под разрешение.
+BUTTON_MIN_W_FRAC = 0.06
+BUTTON_MAX_W_FRAC = 0.45
+BUTTON_MIN_H_FRAC = 0.04
+BUTTON_MAX_H_FRAC = 0.20
 
 
 def _load_win32():
@@ -36,6 +39,8 @@ def _load_win32():
     user32.IsWindowVisible.restype = wintypes.BOOL
     user32.GetWindowThreadProcessId.argtypes = [ctypes.c_void_p, ctypes.POINTER(wintypes.DWORD)]
     user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+    user32.GetWindowRect.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_long * 4)]
+    user32.GetWindowRect.restype = wintypes.BOOL
 
     kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
     kernel32.OpenProcess.restype = wintypes.HANDLE
@@ -51,7 +56,9 @@ def _load_win32():
     return ctypes, wintypes, user32, kernel32
 
 
-class DotaProcessFinder:
+class DotaWindowFinder:
+    """Находит видимое окно процесса Dota 2 и отдаёт его экранный прямоугольник."""
+
     def __init__(self, process_names: Iterable[str]):
         self._api = _load_win32()
         self._targets = {name.strip().lower() for name in process_names if name.strip()}
@@ -60,11 +67,12 @@ class DotaProcessFinder:
     def available(self) -> bool:
         return self._api is not None
 
-    def find_pid(self) -> int | None:
+    def find_rect(self) -> tuple[int, int, int, int] | None:
+        """Возвращает (left, top, width, height) окна Dota 2 или None."""
         if self._api is None:
             return None
         ctypes, wintypes, user32, kernel32 = self._api
-        result: list[int] = []
+        result: list[tuple[int, int, int, int]] = []
 
         @ctypes.WINFUNCTYPE(wintypes.BOOL, ctypes.c_void_p, ctypes.c_void_p)
         def enum_proc(hwnd, lparam):
@@ -72,7 +80,7 @@ class DotaProcessFinder:
                 return True
             pid = wintypes.DWORD()
             user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-            if not pid.value or pid.value in result:
+            if not pid.value:
                 return True
             handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid.value)
             if not handle:
@@ -84,20 +92,28 @@ class DotaProcessFinder:
                     return True
                 name = os.path.basename(buffer.value).lower()
                 if name in self._targets:
-                    result.append(int(pid.value))
+                    rect = (ctypes.c_long * 4)()
+                    if user32.GetWindowRect(hwnd, rect):
+                        w = int(rect[2]) - int(rect[0])
+                        h = int(rect[3]) - int(rect[1])
+                        if w > 0 and h > 0:
+                            result.append((int(rect[0]), int(rect[1]), w, h))
             finally:
                 kernel32.CloseHandle(handle)
             return True
 
         user32.EnumWindows(enum_proc, 0)
-        return result[0] if result else None
+        if not result:
+            return None
+        # Берём самое большое окно Dota (на случай нескольких процессов).
+        return max(result, key=lambda r: r[2] * r[3])
 
 
 class AcceptConfirmationStateMachine:
     """Подтверждает сигнал кнопки «Принять» серией стабильных опросов.
 
-    Одиночный ложный срабатывание UI Automation не должно отправлять
-    уведомление: кнопка должна оставаться видимой `confirmations` опросов
+    Одиночный ложный срабатывание анализа скриншота не должно отправлять
+    уведомление: кнопка должна оставаться на экране `confirmations` опросов
     подряд. Повторное подтверждение в пределах cooldown подавляется.
     """
 
@@ -127,6 +143,13 @@ class AcceptConfirmationStateMachine:
 
 
 class AcceptUiDetector(BaseDetector):
+    """Детектирует зелёную кнопку «Принять» на скриншоте окна Dota 2.
+
+    Dota 2 (SDL) не отдаёт свой интерфейс через UI Automation, поэтому
+    детекция идёт по изображению: ищется крупный зелёный прямоугольник
+    пропорций кнопки принятия.
+    """
+
     name = "accept_button"
 
     def __init__(
@@ -138,86 +161,41 @@ class AcceptUiDetector(BaseDetector):
         required_confirmations: int = 3,
     ):
         super().__init__(sink)
-        self._finder = DotaProcessFinder(process_names)
+        self._finder = DotaWindowFinder(process_names)
         self._poll_interval = max(poll_interval_ms, 150) / 1000
         self._confirmation = AcceptConfirmationStateMachine(
             confirmations=required_confirmations,
             cooldown_seconds=cooldown_seconds,
         )
-        self._pid: int | None = None
 
-    def _find_accept_button(self) -> bool:
+    def _detect_accept_button(self, rect: tuple[int, int, int, int]) -> bool:
         try:
-            import uiautomation as auto  # type: ignore
+            import cv2  # type: ignore
+            import numpy as np  # type: ignore
+            import pyautogui  # type: ignore
         except Exception as exc:
-            log.error("accept_button: требуется пакет uiautomation: %s", exc)
+            log.error("accept_button: не хватает зависимостей (pyautogui, opencv-python, numpy, pillow): %s", exc)
             raise
 
-        if not self._pid:
+        x, y, w, h = rect
+        if w < 800 or h < 600:
             return False
-
-        # Строго по PID найденного процесса Dota: никакого глобального поиска
-        # SDL_app и fallback на foreground — иначе любое переключение окон
-        # на Dota выглядит как появившаяся кнопка.
-        try:
-            window = auto.WindowControl(searchDepth=1, ProcessId=self._pid)
-        except Exception:
-            return False
-
-        if window is None or not getattr(window, "Exists", lambda *_: False)(0, 0):
-            return False
-
-        def walk(control, depth: int = 0) -> bool:
-            if depth > 14:
-                return False
-            try:
-                name = (getattr(control, "Name", "") or "").strip().lower()
-                if name in ACCEPT_TEXTS:
-                    ctrl_type = (getattr(control, "ControlTypeName", "") or "").lower()
-                    if "button" in ctrl_type:
-                        try:
-                            return bool(
-                                control.IsEnabled
-                                and control.IsVisible
-                                and not control.IsOffscreen
-                            )
-                        except Exception:
-                            return False
-                for child in control.GetChildren():
-                    if walk(child, depth + 1):
-                        return True
-            except Exception:
-                return False
-            return False
-
-        try:
-            return walk(window)
-        except Exception:
-            return False
+        screenshot = pyautogui.screenshot(region=(x, y, w, h))
+        img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+        return has_accept_button(img)
 
     def run(self) -> None:
         if not self._finder.available:
             log.error("accept_button работает только на Windows")
             return
-        try:
-            import uiautomation as auto  # type: ignore
-            auto.SetGlobalSearchTimeout(1)
-        except Exception as exc:
-            log.error("accept_button: установи uiautomation (pip install uiautomation): %s", exc)
-            return
         log.info("Ожидаю появление кнопки «Принять» в окне Dota 2")
         while not self.stopping:
             try:
-                pid = self._finder.find_pid()
-                if pid:
-                    self._pid = pid
-                elif self._pid:
-                    self._pid = None
-                    self._confirmation.reset()
-                has_accept = self._find_accept_button()
+                rect = self._finder.find_rect()
+                has_accept = bool(rect) and self._detect_accept_button(rect)
                 now = time.time()
                 if self._confirmation.observe(has_accept, now):
-                    log.info("Найдена кнопка «Принять» — матч найден")
+                    log.info("Обнаружена кнопка «Принять» — матч найден")
                     self.emit(
                         MatchEvent(
                             type=EventType.MATCH_FOUND,
@@ -228,3 +206,48 @@ class AcceptUiDetector(BaseDetector):
             except Exception:
                 log.debug("Ошибка accept_button", exc_info=True)
             time.sleep(self._poll_interval)
+
+
+def has_accept_button(img_bgr) -> bool:
+    """True, если на изображении окна Dota 2 есть зелёная кнопка «Принять».
+
+    Чистая функция над массивом OpenCV (BGR) — без скриншота, чтобы её
+    можно было тестировать на синтетических изображениях.
+    """
+    import cv2  # type: ignore
+    import numpy as np  # type: ignore
+
+    h, w = img_bgr.shape[:2]
+    if w < 800 or h < 600:
+        return False
+    hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(
+        hsv,
+        np.array(GREEN_HSV_LOWER, dtype=np.uint8),
+        np.array(GREEN_HSV_UPPER, dtype=np.uint8),
+    )
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    min_w, max_w = w * BUTTON_MIN_W_FRAC, w * BUTTON_MAX_W_FRAC
+    min_h, max_h = h * BUTTON_MIN_H_FRAC, h * BUTTON_MAX_H_FRAC
+    for c in cnts:
+        if cv2.contourArea(c) < 1500:
+            continue
+        bx, by, bw, bh = cv2.boundingRect(c)
+        if not (min_w <= bw <= max_w and min_h <= bh <= max_h):
+            continue
+        # Берём ROI с отступом: у однотонно залитой кнопки граница совпадает
+        # с краем bbox, и Canny без отступа не видит градиента.
+        pad = max(4, int(0.08 * bw))
+        px1, py1 = max(0, bx - pad), max(0, by - pad)
+        px2, py2 = min(w, bx + bw + pad), min(h, by + bh + pad)
+        roi = img_bgr[py1:py2, px1:px2]
+        if roi.size == 0:
+            continue
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, 50, 150)
+        if edges.sum() > 500:
+            return True
+    return False
