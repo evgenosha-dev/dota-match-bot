@@ -42,5 +42,6 @@
   },
   "dedupe_window_seconds": 45,
   "state_path": "state.json",
+  "pairing_path": "pairing.json",
   "log_level": "INFO"
 }

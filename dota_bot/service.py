@@ -9,7 +9,6 @@ from typing import Any
 
 from .config import BotConfig
 from .detectors.base import BaseDetector
-from .detectors.foreground import ForegroundDetector
 from .detectors.gsi import GsiDetector
 from .detectors.opendota import OpenDotaDetector
 from .detectors.steam import SteamDetector
@@ -26,6 +25,12 @@ ENRICH_WINDOW_SECONDS = 900
 FINISHED_DEDUPE_SECONDS = 21600
 FOUND_SUPPRESS_SECONDS = 900
 FOUND_EXPIRE_SECONDS = 240
+
+# Уведомление «матч найден» отправляется только при обнаружении реальной
+# кнопки «Принять» через UI Automation. Сигналы вроде «Dota вышла на
+# передний план» сюда не входят — они порождали ложные уведомления при
+# каждом переключении окон.
+MATCH_FOUND_SOURCES = frozenset({"accept_button"})
 
 
 class MatchService:
@@ -61,16 +66,6 @@ class MatchService:
                 )
             except Exception:
                 log.debug("Не удалось добавить acceptwin детектор", exc_info=True)
-        if cfg.foreground.enabled:
-            self._detectors.append(
-                ForegroundDetector(
-                    self._queue,
-                    process_names=cfg.foreground.process_names,
-                    poll_interval_ms=cfg.foreground.poll_interval_ms,
-                    confirmation_delay_ms=cfg.foreground.confirmation_delay_ms,
-                    cooldown_seconds=cfg.foreground.cooldown_seconds,
-                )
-            )
         if cfg.gsi.enabled:
             self._detectors.append(GsiDetector(self._queue, host=cfg.gsi.host, port=cfg.gsi.port))
         if cfg.steam.enabled and cfg.resolved_steamid64:
@@ -173,6 +168,8 @@ class MatchService:
         self._last_found_at = None
         self._found_match_id = None
         self.state.clear("match_found")
+        if not self._last_found_message or not self._last_found_message.get("message_id"):
+            return
         enriched = event
         if event.hero_id is not None:
             hero_name = self._heroes.name(event.hero_id)
@@ -180,11 +177,23 @@ class MatchService:
                 enriched = replace(enriched, hero=hero_name)
         elif event.hero and event.hero.startswith("npc_dota_hero_"):
             enriched = replace(enriched, hero=None)
-
         last = self._last_found_message
         remote = self.config.remote_control.enabled
         if last and last.get("message_id") and time.time() - float(last["sent_at"]) < ENRICH_WINDOW_SECONDS:
             text = format_match_found(enriched, remote_accept=remote)
+            if not text.strip():
+                try:
+                    if remote:
+                        self.notifier.edit_message_reply_markup(
+                            self.config.telegram.chat_id, int(last["message_id"])
+                        )
+                    else:
+                        self.notifier.edit_message(
+                            self.config.telegram.chat_id, int(last["message_id"]), "✅ Матч принят"
+                        )
+                except Exception:
+                    pass
+                return
             if self.notifier is not None:
                 try:
                     ok = self.notifier.edit_message(
@@ -208,18 +217,7 @@ class MatchService:
             else:
                 log.info("[DRY-RUN] дополненное сообщение: %s", text.replace("\n", " | "))
                 return
-
-        key = f"match_started:{event.match_id or event.source}"
-        if not self.state.should_notify(key, self.config.dedupe_window_seconds):
-            return
-        self.state.mark(key)
-        message_id = self._send(format_match_found(enriched, remote_accept=remote))
-        self._last_found_message = {
-            "message_id": message_id,
-            "sent_at": time.time(),
-            "event": enriched,
-        }
-        self.state.save()
+        return
 
     def _handle_match_finished(self, event: MatchEvent) -> None:
         self._in_match = False
@@ -282,6 +280,9 @@ class MatchService:
             log.info("Уведомления выключены — событие проигнорировано")
             return
         if event.type is EventType.MATCH_FOUND:
+            if event.source not in MATCH_FOUND_SOURCES:
+                log.debug("MATCH_FOUND от %s проигнорирован: только по кнопке «Принять»", event.source)
+                return
             if not self._in_match and (not self._match_started_at or time.time() - self._match_started_at > 300):
                 if self.config.telegram.notify_match_found:
                     self._handle_match_found(event)

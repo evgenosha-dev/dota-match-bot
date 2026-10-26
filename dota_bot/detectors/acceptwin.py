@@ -93,8 +93,41 @@ class DotaProcessFinder:
         return result[0] if result else None
 
 
+class AcceptConfirmationStateMachine:
+    """Подтверждает сигнал кнопки «Принять» серией стабильных опросов.
+
+    Одиночный ложный срабатывание UI Automation не должно отправлять
+    уведомление: кнопка должна оставаться видимой `confirmations` опросов
+    подряд. Повторное подтверждение в пределах cooldown подавляется.
+    """
+
+    def __init__(self, confirmations: int = 3, cooldown_seconds: float = 90.0):
+        self._confirmations = max(1, confirmations)
+        self._cooldown_seconds = cooldown_seconds
+        self._positive_count = 0
+        self._last_emit_at: float | None = None
+
+    def observe(self, has_accept: bool, now: float) -> bool:
+        if not has_accept:
+            self._positive_count = 0
+            return False
+        self._positive_count += 1
+        if self._positive_count < self._confirmations:
+            return False
+        if (
+            self._last_emit_at is not None
+            and now - self._last_emit_at < self._cooldown_seconds
+        ):
+            return False
+        self._last_emit_at = now
+        return True
+
+    def reset(self) -> None:
+        self._positive_count = 0
+
+
 class AcceptUiDetector(BaseDetector):
-    name = "acceptui"
+    name = "accept_button"
 
     def __init__(
         self,
@@ -102,37 +135,34 @@ class AcceptUiDetector(BaseDetector):
         process_names: Iterable[str] = ("dota2.exe",),
         poll_interval_ms: int = 250,
         cooldown_seconds: float = 90.0,
+        required_confirmations: int = 3,
     ):
         super().__init__(sink)
         self._finder = DotaProcessFinder(process_names)
         self._poll_interval = max(poll_interval_ms, 150) / 1000
-        self._cooldown_seconds = cooldown_seconds
-        self._last_emit = 0.0
-        self._seen_accept = False
+        self._confirmation = AcceptConfirmationStateMachine(
+            confirmations=required_confirmations,
+            cooldown_seconds=cooldown_seconds,
+        )
         self._pid: int | None = None
 
     def _find_accept_button(self) -> bool:
         try:
             import uiautomation as auto  # type: ignore
         except Exception as exc:
-            log.error("acceptui: требуется пакет uiautomation: %s", exc)
+            log.error("accept_button: требуется пакет uiautomation: %s", exc)
             raise
 
-        try:
-            window = auto.WindowControl(searchDepth=1, ClassName="SDL_app")
-        except Exception:
-            window = None
+        if not self._pid:
+            return False
 
-        if window is None or not window.Exists(0, 0):
-            try:
-                if self._pid:
-                    window = auto.WindowControl(searchDepth=1, ProcessId=self._pid)
-                else:
-                    window = auto.GetForegroundControl()
-                    if window:
-                        window = window.GetTopLevelControl()
-            except Exception:
-                window = None
+        # Строго по PID найденного процесса Dota: никакого глобального поиска
+        # SDL_app и fallback на foreground — иначе любое переключение окон
+        # на Dota выглядит как появившаяся кнопка.
+        try:
+            window = auto.WindowControl(searchDepth=1, ProcessId=self._pid)
+        except Exception:
+            return False
 
         if window is None or not getattr(window, "Exists", lambda *_: False)(0, 0):
             return False
@@ -143,13 +173,16 @@ class AcceptUiDetector(BaseDetector):
             try:
                 name = (getattr(control, "Name", "") or "").strip().lower()
                 if name in ACCEPT_TEXTS:
-                    ctrl_type = getattr(control, "ControlTypeName", "") or ""
-                    if "Button" in ctrl_type or name.startswith("принять") or name.startswith("accept"):
+                    ctrl_type = (getattr(control, "ControlTypeName", "") or "").lower()
+                    if "button" in ctrl_type:
                         try:
-                            if control.IsEnabled and control.IsVisible:
-                                return True
+                            return bool(
+                                control.IsEnabled
+                                and control.IsVisible
+                                and not control.IsOffscreen
+                            )
                         except Exception:
-                            return True
+                            return False
                 for child in control.GetChildren():
                     if walk(child, depth + 1):
                         return True
@@ -164,13 +197,13 @@ class AcceptUiDetector(BaseDetector):
 
     def run(self) -> None:
         if not self._finder.available:
-            log.error("acceptui работает только на Windows")
+            log.error("accept_button работает только на Windows")
             return
         try:
             import uiautomation as auto  # type: ignore
             auto.SetGlobalSearchTimeout(1)
         except Exception as exc:
-            log.error("acceptui: установи uiautomation (pip install uiautomation): %s", exc)
+            log.error("accept_button: установи uiautomation (pip install uiautomation): %s", exc)
             return
         log.info("Ожидаю появление кнопки «Принять» в окне Dota 2")
         while not self.stopping:
@@ -178,10 +211,12 @@ class AcceptUiDetector(BaseDetector):
                 pid = self._finder.find_pid()
                 if pid:
                     self._pid = pid
-                has_accept = self._find_accept_button() if self._pid or True else False
+                elif self._pid:
+                    self._pid = None
+                    self._confirmation.reset()
+                has_accept = self._find_accept_button()
                 now = time.time()
-                if has_accept and not self._seen_accept and now - self._last_emit > self._cooldown_seconds:
-                    self._last_emit = now
+                if self._confirmation.observe(has_accept, now):
                     log.info("Найдена кнопка «Принять» — матч найден")
                     self.emit(
                         MatchEvent(
@@ -190,9 +225,6 @@ class AcceptUiDetector(BaseDetector):
                             detected_at=now,
                         )
                     )
-                self._seen_accept = has_accept
-                if not has_accept:
-                    pass
             except Exception:
-                log.debug("Ошибка acceptui", exc_info=True)
+                log.debug("Ошибка accept_button", exc_info=True)
             time.sleep(self._poll_interval)

@@ -17,6 +17,7 @@ def _app_root() -> Path:
 PROJECT_ROOT = _app_root()
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config.json"
 DEFAULT_STATE_PATH = PROJECT_ROOT / "state.json"
+DEFAULT_PAIRING_PATH = PROJECT_ROOT / "pairing.json"
 STEAM_ID64_BASE = 76561197960265728
 DOTA_APP_ID = 570
 
@@ -87,6 +88,7 @@ class BotConfig:
     remote_control: RemoteControlConfig = field(default_factory=RemoteControlConfig)
     dedupe_window_seconds: float = 90.0
     state_path: Path = Path("state.json")
+    pairing_path: Path = Path("pairing.json")
     log_level: str = "INFO"
 
     @property
@@ -152,11 +154,15 @@ def load_config(path: Path | str | None = None) -> BotConfig:
 
     config = _from_dict(data)
     _apply_env(config)
-    config.state_path = Path(config.state_path)
-    if not config.state_path.is_absolute():
-        base = resolved.parent if path or os.environ.get("DOTA_BOT_CONFIG") else PROJECT_ROOT
-        config.state_path = (base / config.state_path).resolve()
+    base = resolved.parent if path or os.environ.get("DOTA_BOT_CONFIG") else PROJECT_ROOT
+    config.state_path = _resolve_data_path(config.state_path, base)
+    config.pairing_path = _resolve_data_path(config.pairing_path, base)
     return config
+
+
+def _resolve_data_path(value: Path | str, base: Path) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else (base / path).resolve()
 
 
 def _apply_env(config: BotConfig) -> None:
@@ -182,6 +188,9 @@ def _apply_env(config: BotConfig) -> None:
     state_path = os.environ.get("DOTA_BOT_STATE_PATH")
     if state_path:
         config.state_path = Path(state_path)
+    pairing_path = os.environ.get("DOTA_BOT_PAIRING_PATH")
+    if pairing_path:
+        config.pairing_path = Path(pairing_path)
 
 
 def update_config_file(path: Path | str | None, updates: dict[str, Any]) -> Path:

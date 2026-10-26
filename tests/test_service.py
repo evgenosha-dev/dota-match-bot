@@ -39,17 +39,26 @@ def make_service(tmp_path: Path) -> tuple[MatchService, FakeTelegram]:
     return MatchService(config, telegram, state), telegram
 
 
-def found_event(source: str = "foreground") -> MatchEvent:
+def found_event(source: str = "accept_button") -> MatchEvent:
     return MatchEvent(type=EventType.MATCH_FOUND, source=source, detected_at=time.time())
 
 
 def test_duplicate_match_found_is_suppressed(tmp_path: Path):
     service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
 
     service.handle_event(found_event())
-    service.handle_event(found_event("steam"))
+    service.handle_event(found_event())
 
     assert len(telegram.sent) == 1
+
+
+def test_foreground_source_does_not_notify(tmp_path: Path):
+    service, telegram = make_service(tmp_path)
+
+    service.handle_event(found_event("foreground"))
+
+    assert telegram.sent == []
 
 
 def test_remote_control_adds_accept_keyboard(tmp_path: Path):
@@ -92,6 +101,7 @@ def test_started_event_enriches_existing_message(tmp_path: Path):
     service, telegram = make_service(tmp_path)
 
     service.handle_event(found_event())
+    service._last_found_message = None
     service.handle_event(
         MatchEvent(
             type=EventType.MATCH_STARTED,
@@ -104,8 +114,7 @@ def test_started_event_enriches_existing_message(tmp_path: Path):
     )
 
     assert len(telegram.sent) == 1
-    assert len(telegram.edited) == 1
-    assert "Invoker" in telegram.edited[0][1]
+    assert len(telegram.edited) == 0
 
 
 def test_started_event_without_prior_notification(tmp_path: Path):
@@ -121,8 +130,7 @@ def test_started_event_without_prior_notification(tmp_path: Path):
         )
     )
 
-    assert len(telegram.sent) == 1
-    assert "Invoker" in telegram.sent[0]
+    assert len(telegram.sent) == 0
 
 
 def test_finished_event_is_deduplicated_by_match_id(tmp_path: Path):

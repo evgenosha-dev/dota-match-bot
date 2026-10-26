@@ -30,6 +30,7 @@ from dota_bot.config import (
 )
 from dota_bot.detectors.gsi import write_gsi_config
 from dota_bot.formatting import format_test_message
+from dota_bot.pairing import PairingStore
 from dota_bot.paths import find_dota_dir, steamid_from_url
 from dota_bot.service import MatchService
 from dota_bot.state import StateStore
@@ -74,7 +75,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     setup_logging(config.log_level)
 
     print("=" * 52)
-    print("  Dota Match Bot — первичная настройка")
+    print("  Dota Match Bot — привязка по коду")
     print("=" * 52)
 
     print("\nШаг 1/4. Telegram")
@@ -93,18 +94,29 @@ def cmd_setup(args: argparse.Namespace) -> int:
         or os.environ.get("DOTA_BOT_TELEGRAM_CHAT_ID")
         or config.telegram.chat_id
     )
-    if chat_id:
-        print(f"Chat ID: {chat_id}")
-    else:
-        print("Теперь напиши этому боту любое сообщение в Telegram.")
-        input("Нажми Enter, когда отправишь: ")
-        chat_id = client.find_chat_id(timeout_seconds=45)
-        if not chat_id:
-            chat_id = _prompt("Chat ID (оставь пустым, чтобы пропустить): ")
     if not chat_id:
-        print("Chat ID не найден. Укажи его в config.json вручную.", file=sys.stderr)
-        return 2
-    print(f"Chat ID: {chat_id}")
+        store = PairingStore(config.pairing_path)
+        store.load()
+        code = store.create_code(ttl_seconds=180)
+        print("\n" + "=" * 52)
+        print(f"КОД ПРИВЯЗКИ: {code}")
+        print("=" * 52)
+        print("\n1. Открой @BflyDotaBot")
+        print(f"2. Напиши: /start {code}")
+        print("3. Код одноразовый, действует 3 минуты")
+        print("4. Мастер ждёт подтверждение автоматически")
+        print("\nЖду привязку Telegram...")
+        try:
+            chat_id = _wait_for_pairing(client, store, code, timeout_seconds=180)
+        except TelegramError as exc:
+            print(f"Не удалось дождаться Telegram: {exc}", file=sys.stderr)
+            return 3
+        if not chat_id:
+            print("Код не использован. Запусти setup заново.", file=sys.stderr)
+            return 2
+        print(f"Привязан chat_id: {chat_id}")
+    else:
+        print(f"Chat ID уже настроен: {chat_id}")
 
     updates: dict[str, dict] = {
         "telegram": {"bot_token": token, "chat_id": str(chat_id)}
@@ -195,6 +207,70 @@ def cmd_setup(args: argparse.Namespace) -> int:
         print(f"Не удалось отправить тест: {exc}", file=sys.stderr)
         return 3
     return 0
+
+
+def _extract_start_code(update: dict) -> tuple[str | None, str | None]:
+    """Возвращает (chat_id, код) из команды /start <код> в обновлении Telegram."""
+    for key in ("message", "edited_message"):
+        payload = update.get(key)
+        if not isinstance(payload, dict):
+            continue
+        parts = str(payload.get("text") or "").strip().split()
+        if not parts:
+            continue
+        command = parts[0].split("@", 1)[0].lower()
+        if command != "/start":
+            continue
+        chat = payload.get("chat")
+        if not isinstance(chat, dict) or chat.get("id") is None:
+            continue
+        code = parts[1] if len(parts) > 1 else None
+        return str(chat["id"]), code
+    return None, None
+
+
+def _wait_for_pairing(
+    client: TelegramClient,
+    store: PairingStore,
+    code: str,
+    timeout_seconds: int = 180,
+) -> str | None:
+    deadline = time.time() + timeout_seconds
+    offset: int | None = None
+    while time.time() < deadline:
+        updates = client.get_updates(offset=offset, timeout=10)
+        for update in updates:
+            update_id = update.get("update_id")
+            if isinstance(update_id, int):
+                offset = max(offset or 0, update_id + 1)
+            chat_id, supplied_code = _extract_start_code(update)
+            if chat_id is None:
+                continue
+            if supplied_code is None:
+                continue
+            if supplied_code != code:
+                continue
+            if store.claim(supplied_code, chat_id):
+                try:
+                    client.send_message(
+                        chat_id,
+                        "✅ Telegram привязан. Возвращайся в консоль — мастер продолжит настройку.",
+                    )
+                except TelegramError:
+                    log.debug("Не удалось отправить подтверждение привязки", exc_info=True)
+                return chat_id
+            try:
+                client.send_message(
+                    chat_id,
+                    "Код недействителен или истёк. Запусти setup заново и введи новый код.",
+                )
+            except TelegramError:
+                pass
+        store.load()
+        existing_chat_id = store.get_chat_id(code)
+        if existing_chat_id:
+            return existing_chat_id
+    return None
 
 
 def _ask_yes(text: str, default: bool = True) -> bool:
@@ -344,9 +420,12 @@ def cmd_run(args: argparse.Namespace) -> int:
             return 0
 
     application = Application.builder().token(config.telegram.bot_token).build()
+    pairing = PairingStore(config.pairing_path)
+    pairing.load()
     application.bot_data["service"] = service
     application.bot_data["state"] = state
     application.bot_data["config"] = config
+    application.bot_data["pairing"] = pairing
     application.add_handler(CallbackQueryHandler(tg_on_callback))
     application.add_handler(CommandHandler("start", tg_cmd_start))
     application.add_handler(CommandHandler("on", tg_cmd_on))
@@ -445,7 +524,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     setup_logging(config.log_level)
     state = build_state(config)
     last = state.last_event
-    print(f"Детекторы: foreground={config.foreground.enabled} gsi={config.gsi.enabled} steam={config.steam.enabled}")
+    print(f"Детекторы: accept_button=Windows gsi={config.gsi.enabled} steam={config.steam.enabled}")
     print(f"Найдено матчей: {state.get_stat('matches_found')}")
     print(f"Завершено матчей: {state.get_stat('matches_finished')}")
     print(f"Отправлено уведомлений: {state.get_stat('notifications_sent')}")

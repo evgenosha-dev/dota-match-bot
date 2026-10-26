@@ -25,21 +25,21 @@ def accept_keyboard() -> dict:
 def format_match_found(event: MatchEvent, remote_accept: bool = False) -> str:
     lines = ["🚨 <b>Матч найден!</b>", ""]
 
-    if event.source == "foreground":
+    if event.source == "gsi":
+        pass
+    elif event.source == "steam":
+        lines.append("Steam зафиксировал переход в игру Dota 2.")
+    elif event.source == "accept_button":
         if remote_accept:
             lines.append(
-                "Dota 2 вывела окно на передний план — это сигнал о найденном матче.\n"
+                "Найден матч в очереди поиска.\n"
                 "<b>Нажми «Принять матч» в этом сообщении.</b>"
             )
         else:
             lines.append(
-                "Dota 2 вывела окно на передний план — это сигнал о найденном матче.\n"
+                "Найден матч в очереди поиска.\n"
                 "<b>Открой игру и нажми «Принять».</b>"
             )
-    elif event.source == "gsi":
-        lines.append("Dota 2 подтвердила вход в матч.")
-    elif event.source == "steam":
-        lines.append("Steam зафиксировал переход в игру Dota 2.")
     else:
         lines.append("Обнаружен новый матч.")
 

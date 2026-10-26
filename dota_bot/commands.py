@@ -34,7 +34,28 @@ def _state(context: ContextTypes.DEFAULT_TYPE) -> StateStore | None:
     return context.application.bot_data.get("state")
 
 
+def _start_code(update: Update) -> str | None:
+    if update.message is None:
+        return None
+    parts = str(update.message.text or "").strip().split()
+    if not parts or parts[0].split("@", 1)[0].lower() != "/start":
+        return None
+    return parts[1] if len(parts) > 1 else None
+
+
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    pairing = context.application.bot_data.get("pairing")
+    code = _start_code(update)
+    if pairing is not None and code is not None:
+        if update.effective_chat is None:
+            return
+        pairing.load()
+        chat_id = str(update.effective_chat.id)
+        if pairing.claim(code, chat_id):
+            await update.message.reply_text("✅ Telegram привязан. Возвращайся в консоль — мастер продолжит настройку.")
+        else:
+            await update.message.reply_text("Код недействителен или истёк. Запусти setup заново и введи новый код.")
+        return
     await update.message.reply_text(HELP_TEXT, parse_mode="HTML")
 
 

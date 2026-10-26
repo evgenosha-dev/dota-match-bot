@@ -4,8 +4,8 @@ from dota_bot.formatting import format_match_finished, format_match_found
 from dota_bot.models import EventType, MatchEvent, PlayerInfo
 
 
-def test_match_found_message_from_foreground():
-    event = MatchEvent(type=EventType.MATCH_FOUND, source="foreground", detected_at=time.time())
+def test_match_found_message_from_accept_button():
+    event = MatchEvent(type=EventType.MATCH_FOUND, source="accept_button", detected_at=time.time())
     text = format_match_found(event)
 
     assert "Матч найден" in text
