@@ -8,9 +8,11 @@ from .base import BaseDetector
 
 log = logging.getLogger(__name__)
 
-# Зелёная кнопка «Принять» в HSV (Dota 2: насыщенный зелёный).
-GREEN_HSV_LOWER = (35, 80, 80)
+# Зелёная кнопка «Принять» в HSV. Реальная кнопка в Dota 2 — тёмный
+# зелёный с градиентом: края уходят в S~50/V~45, поэтому пороги мягкие.
+GREEN_HSV_LOWER = (35, 50, 45)
 GREEN_HSV_UPPER = (90, 255, 255)
+BUTTON_MIN_FILL = 0.40
 
 # Где на экране искать: accept-диалог появляется в центре экрана.
 CENTER_X1_FRAC = 0.20
@@ -36,6 +38,27 @@ def _deps():
     return cv2, np, pyautogui
 
 
+def _project_root():
+    from pathlib import Path
+
+    return Path(__file__).resolve().parents[2]
+
+
+def _save_debug_frame(debug_dir, img_bgr) -> None:
+    try:
+        import cv2  # type: ignore
+
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        # Оставляем только последние 10 кадров.
+        frames = sorted(debug_dir.glob("accept_*.jpg"))
+        for stale in frames[:-9]:
+            stale.unlink(missing_ok=True)
+        name = time.strftime("accept_%Y%m%d_%H%M%S.jpg")
+        cv2.imwrite(str(debug_dir / name), img_bgr)
+    except Exception:
+        log.debug("Не удалось сохранить отладочный кадр", exc_info=True)
+
+
 def has_accept_button(img_bgr) -> tuple[bool, dict]:
     """Ищет зелёную кнопку «Принять» в центральном регионе скриншота.
 
@@ -45,7 +68,13 @@ def has_accept_button(img_bgr) -> tuple[bool, dict]:
     import cv2  # type: ignore
     import numpy as np  # type: ignore
 
-    stats: dict = {"screen_w": 0, "screen_h": 0, "green_px": 0, "candidates": 0}
+    stats: dict = {
+        "screen_w": 0,
+        "screen_h": 0,
+        "green_px": 0,
+        "candidates": 0,
+        "candidate_details": [],
+    }
     h, w = img_bgr.shape[:2]
     stats["screen_w"], stats["screen_h"] = w, h
     if w < 1024 or h < 768:
@@ -78,6 +107,15 @@ def has_accept_button(img_bgr) -> tuple[bool, dict]:
             continue
         bx, by, bw, bh = cv2.boundingRect(c)
         stats["candidates"] += 1
+        detail = {
+            "w": int(bw),
+            "h": int(bh),
+            "wf": round(bw / rw, 3),
+            "hf": round(bh / rh, 3),
+            "aspect": round(bw / max(bh, 1), 2),
+            "fill": round(area / max(bw * bh, 1), 3),
+        }
+        stats["candidate_details"].append(detail)
         if not (rw * BUTTON_MIN_W_FRAC <= bw <= rw * BUTTON_MAX_W_FRAC):
             continue
         if not (rh * BUTTON_MIN_H_FRAC <= bh <= rh * BUTTON_MAX_H_FRAC):
@@ -86,7 +124,7 @@ def has_accept_button(img_bgr) -> tuple[bool, dict]:
         if not (BUTTON_MIN_ASPECT <= aspect <= BUTTON_MAX_ASPECT):
             continue
         fill = area / max(bw * bh, 1)
-        if fill < 0.55:
+        if fill < BUTTON_MIN_FILL:
             continue
         return True, stats
     return False, stats
@@ -162,6 +200,8 @@ class AcceptUiDetector(BaseDetector):
             return
         log.info("Детектор кнопки «Принять» запущен: анализ экрана каждые %.0f мс", self._poll_interval * 1000)
         last_heartbeat = 0.0
+        last_debug_save = 0.0
+        debug_dir = _project_root() / "logs" / "debug"
         while not self.stopping:
             try:
                 screenshot = pyautogui.screenshot()
@@ -170,11 +210,21 @@ class AcceptUiDetector(BaseDetector):
                 now = time.time()
                 if now - last_heartbeat >= 10:
                     last_heartbeat = now
+                    details = "; ".join(
+                        "w={w} h={h} wf={wf} hf={hf} asp={aspect} fill={fill}".format(**d)
+                        for d in stats["candidate_details"][:3]
+                    )
                     log.info(
-                        "accept_button: экран %dx%d, зелёных пикселей в центре: %d, кандидатов: %d",
+                        "accept_button: экран %dx%d, зелёных пикселей в центре: %d, кандидатов: %d%s",
                         stats["screen_w"], stats["screen_h"],
                         stats["green_px"], stats["candidates"],
+                        f" ({details})" if details else "",
                     )
+                if has_accept and now - last_debug_save >= 30:
+                    # Сохраняем то, что реально видит детектор, — по этим
+                    # кадрам можно точно подкрутить пороги.
+                    last_debug_save = now
+                    _save_debug_frame(debug_dir, img)
                 if self._confirmation.observe(has_accept, now):
                     log.info("Обнаружена кнопка «Принять» — матч найден")
                     self.emit(
