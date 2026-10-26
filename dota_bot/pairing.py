@@ -35,16 +35,33 @@ class PairingStore:
         except Exception as exc:
             log.debug("Не удалось сохранить pairing: %s", exc)
 
-    def create_code(self, ttl_seconds: int = 300) -> str:
+    def create_code(self, ttl_seconds: int | None = None) -> str:
+        """Создаёт код привязки. По умолчанию срока действия нет.
+
+        Если уже есть неиспользованный код — возвращает его же, чтобы
+        повторный запуск setup не инвалидировал ранее показанный код.
+        Явный ttl_seconds задаёт срок действия (для тестов).
+        """
         codes = self._data.setdefault("codes", {})
         now = time.time()
-        codes = {k: v for k, v in codes.items() if isinstance(v, dict) and float(v.get("expires", 0)) > now}
+        codes = {
+            k: v
+            for k, v in codes.items()
+            if isinstance(v, dict)
+            and (v.get("expires") is None or float(v["expires"]) > now)
+        }
         self._data["codes"] = codes
+        for code, entry in codes.items():
+            if isinstance(entry, dict) and not entry.get("used"):
+                return code
         while True:
             code = str(100000 + secrets.randbelow(900000))
             if code not in codes:
                 break
-        codes[code] = {"chat_id": None, "expires": now + ttl_seconds, "used": False}
+        entry: dict[str, Any] = {"chat_id": None, "used": False}
+        if ttl_seconds is not None:
+            entry["expires"] = now + ttl_seconds
+        codes[code] = entry
         self.save()
         return code
 
@@ -55,7 +72,8 @@ class PairingStore:
             return False
         if entry.get("used"):
             return False
-        if float(entry.get("expires", 0)) < time.time():
+        expires = entry.get("expires")
+        if expires is not None and float(expires) < time.time():
             codes.pop(code, None)
             self.save()
             return False
@@ -69,7 +87,8 @@ class PairingStore:
         entry = codes.get(code)
         if not isinstance(entry, dict) or not entry.get("used"):
             return None
-        if float(entry.get("expires", 0)) < time.time():
+        expires = entry.get("expires")
+        if expires is not None and float(expires) < time.time():
             return None
         chat_id = entry.get("chat_id")
         return str(chat_id) if chat_id else None

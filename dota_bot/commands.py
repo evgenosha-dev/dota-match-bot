@@ -54,7 +54,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if pairing.claim(code, chat_id):
             await update.message.reply_text("✅ Telegram привязан. Возвращайся в консоль — мастер продолжит настройку.")
         else:
-            await update.message.reply_text("Код недействителен или истёк. Запусти setup заново и введи новый код.")
+            await update.message.reply_text("Такой код не найден или уже использован. Запусти setup ещё раз — мастер покажет действующий код.")
         return
     await update.message.reply_text(HELP_TEXT, parse_mode="HTML")
 
