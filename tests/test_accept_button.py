@@ -71,6 +71,43 @@ def test_region_analysis_matches_full_screen():
     assert found_region is True
 
 
+def _region_canvas(width: int = 1152, height: int = 540):
+    return np.full((height, width, 3), 22, np.uint8)
+
+
+def test_edge_strip_is_rejected():
+    # Зелёная полоса по краю региона (артефакты интерфейса меню и других
+    # игр) не должна считаться кнопкой: настоящая кнопка всегда в центре.
+    region = _region_canvas()
+    cv2.rectangle(region, (0, 0), (1151, 42), (60, 180, 60), -1)  # полоса сверху
+    found, _ = has_accept_button_in_region(region)
+    assert found is False
+
+    region = _region_canvas()
+    cv2.rectangle(region, (0, 498), (1151, 539), (60, 180, 60), -1)  # снизу
+    found, _ = has_accept_button_in_region(region)
+    assert found is False
+
+
+def test_hollow_wide_blob_is_rejected():
+    # Широкий, но «пустой» внутри контур (fill низкий) — не кнопка:
+    # настоящая кнопка плотная, fill ~0.95.
+    region = _region_canvas()
+    cv2.rectangle(region, (300, 200), (620, 264), (60, 180, 60), -1)
+    cv2.rectangle(region, (316, 208), (604, 256), (22, 22, 22), -1)
+    found, _ = has_accept_button_in_region(region)
+    assert found is False
+
+
+def test_low_aspect_blob_is_rejected():
+    # Широкий прямоугольник с аспектом < 3 (например, панель меню)
+    # не должен проходить: у кнопки «Принять» аспект ~5.
+    region = _region_canvas()
+    cv2.rectangle(region, (400, 200), (700, 360), (60, 180, 60), -1)
+    found, _ = has_accept_button_in_region(region)
+    assert found is False
+
+
 def test_single_observation_does_not_emit():
     machine = AcceptConfirmationStateMachine(confirmations=3)
 

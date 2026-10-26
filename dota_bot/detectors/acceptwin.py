@@ -21,13 +21,22 @@ CENTER_Y1_FRAC = 0.30
 CENTER_Y2_FRAC = 0.80
 
 # Пропорции кнопки относительно центрального региона.
-BUTTON_MIN_W_FRAC = 0.10
+# Значения выверены по реальным отладочным кадрам: настоящая кнопка
+# «Принять» — это плотный (fill ~0.95) широкий (aspect ~5) прямоугольник
+# в центре региона. Ложные кандидаты (зелёные полосы интерфейса меню,
+# элементы других игр) либо прижаты к краю региона, либо редкие по fill
+# (≤0.83), либо вытянутые вертикально (aspect < 3).
+BUTTON_MIN_W_FRAC = 0.15
 BUTTON_MAX_W_FRAC = 0.90
 BUTTON_MIN_H_FRAC = 0.05
 BUTTON_MAX_H_FRAC = 0.55
 BUTTON_MIN_AREA_FRAC = 0.003  # минимум 0.3% площади региона
-BUTTON_MIN_ASPECT = 1.8
+BUTTON_MIN_ASPECT = 3.0
 BUTTON_MAX_ASPECT = 9.0
+BUTTON_MIN_FILL = 0.70
+# Кандидат, касающийся края региона, — артефакт захвата (полоса по краю
+# экрана), а не кнопка: настоящая кнопка всегда отступает от краёв.
+BUTTON_EDGE_MARGIN_FRAC = 0.02
 
 
 def _deps():
@@ -116,12 +125,18 @@ def has_accept_button_in_region(region) -> tuple[bool, dict]:
     cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     min_area = rw * rh * BUTTON_MIN_AREA_FRAC
+    margin_x = rw * BUTTON_EDGE_MARGIN_FRAC
+    margin_y = rh * BUTTON_EDGE_MARGIN_FRAC
     for c in cnts:
         area = cv2.contourArea(c)
         if area < min_area:
             continue
         bx, by, bw, bh = cv2.boundingRect(c)
         stats["candidates"] += 1
+        if bx < margin_x or by < margin_y:
+            continue
+        if bx + bw > rw - margin_x or by + bh > rh - margin_y:
+            continue
         detail = {
             "w": int(bw),
             "h": int(bh),
@@ -138,8 +153,11 @@ def has_accept_button_in_region(region) -> tuple[bool, dict]:
         aspect = bw / max(bh, 1)
         if not (BUTTON_MIN_ASPECT <= aspect <= BUTTON_MAX_ASPECT):
             continue
-        fill = area / max(bw * bh, 1)
-        if fill < BUTTON_MIN_FILL:
+        # Плотность зелёных пикселей внутри bounding-rect. contourArea для
+        # полых контуров завышает fill, поэтому считаем прямо по маске:
+        # настоящая кнопка плотная (fill ~0.95), «рамки» и панели — нет.
+        fill_px = int(mask[by : by + bh, bx : bx + bw].sum()) // 255
+        if fill_px / max(bw * bh, 1) < BUTTON_MIN_FILL:
             continue
         return True, stats
     return False, stats

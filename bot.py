@@ -20,6 +20,7 @@ from dota_bot.commands import (
     cmd_start as tg_cmd_start,
     on_callback as tg_on_callback,
 )
+from dota_bot.autostart import SingleInstance, install_autostart, start_background
 from dota_bot.config import (
     ConfigError,
     BotConfig,
@@ -91,7 +92,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     print("  Dota Match Bot — привязка по коду")
     print("=" * 52)
 
-    print("\nШаг 1/4. Telegram")
+    print("\nШаг 1/5. Telegram")
     print("Используем общий бот @BflyDotaBot")
     token = config.telegram.bot_token or "8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo"
     client = TelegramClient(token, timeout=config.telegram.request_timeout_seconds)
@@ -139,7 +140,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
         "telegram": {"bot_token": token, "chat_id": str(chat_id)}
     }
 
-    print("\nШаг 2/4. Steam")
+    print("\nШаг 2/5. Steam")
     print("Ключ: https://steamcommunity.com/dev/apikey — обязателен для статуса «в игре».")
     print("Вставка из буфера работает: Ctrl+V.")
     api_key = (
@@ -184,7 +185,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     else:
         print("Пропущено: останутся только GSI и детектор окна Dota 2.")
 
-    print("\nШаг 3/4. Game State Integration")
+    print("\nШаг 3/5. Game State Integration")
     if sys.platform != "win32":
         print("GSI доступен только на Windows — пропущено.")
     else:
@@ -205,7 +206,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
         else:
             print("Dota 2 не найдена. Позже выполни: dota-match-bot.exe gsi-setup")
 
-    print("\nШаг 4/4. Автопринятие матча")
+    print("\nШаг 4/5. Автопринятие матча")
     if sys.platform == "win32":
         if _ask_yes("Включить кнопку «Принять матч» в Telegram?", default=True):
             updates["remote_control"] = {"enabled": True}
@@ -229,6 +230,25 @@ def cmd_setup(args: argparse.Namespace) -> int:
     except TelegramError as exc:
         print(f"Не удалось отправить тест: {exc}", file=sys.stderr)
         return 3
+
+    if sys.platform == "win32":
+        print("\nШаг 5/5. Автозапуск")
+        try:
+            autostart_file = install_autostart(PROJECT_ROOT)
+            print(f"Бот будет запускаться сам при входе в Windows:")
+            print(f"  {autostart_file}")
+        except RuntimeError as exc:
+            print(f"Не удалось прописать автозапуск: {exc}", file=sys.stderr)
+
+        if _ask_yes("Запустить бота в фоне сейчас?", default=True):
+            try:
+                start_background(PROJECT_ROOT)
+                print("Бот запущен в фоне (без окон, логи: logs\\bot.log).")
+            except RuntimeError as exc:
+                print(f"Не удалось запустить в фоне: {exc}", file=sys.stderr)
+                print("Запусти позже двойным кликом: start_dota_match_bot.cmd")
+        print("\nГотово. Это окно можно закрыть — бот работает в фоне")
+        print("и стартует сам после перезагрузки Windows.")
     return 0
 
 
@@ -384,6 +404,12 @@ def connect_notifier(config: BotConfig, attempts: int = 3) -> TelegramClient:
     raise last_error or TelegramError("Не удалось подключиться к Telegram")
 
 
+def _has_console() -> bool:
+    # pythonw запускается без консоли: stdin/stdout равны None,
+    # интерактивный мастер там работать не может.
+    return sys.stdin is not None and sys.stdout is not None
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     from telegram.ext import Application, CallbackQueryHandler, CommandHandler
 
@@ -392,9 +418,12 @@ def cmd_run(args: argparse.Namespace) -> int:
         config = load_config(getattr(args, "config", None))
         validate(config, require_telegram=require_telegram)
     except ConfigError as exc:
-        print(f"Ошибка конфигурации: {exc}", file=sys.stderr)
-        if not require_telegram:
+        if not require_telegram or not _has_console():
+            # Фоновый процесс (pythonw) без конфигурации: мастеру нужно
+            # окно консоли, поэтому просто логируем и выходим.
+            print(f"Ошибка конфигурации: {exc}", file=sys.stderr)
             return 2
+        print(f"Ошибка конфигурации: {exc}", file=sys.stderr)
         print("\nБот ещё не настроен — запускаю мастер настройки.\n")
         setup_args = argparse.Namespace(
             config=getattr(args, "config", None),
@@ -403,16 +432,13 @@ def cmd_run(args: argparse.Namespace) -> int:
             steam_api_key=None,
             steam_id=None,
         )
-        code = cmd_setup(setup_args)
-        if code != 0:
-            return code
-        try:
-            config = load_config(getattr(args, "config", None))
-            validate(config)
-        except ConfigError as exc2:
-            print(f"Ошибка конфигурации: {exc2}", file=sys.stderr)
-            return 2
+        return cmd_setup(setup_args)
     setup_logging(config.log_level)
+
+    lock = SingleInstance(PROJECT_ROOT / "run.lock")
+    if not lock.acquire():
+        log.info("Экземпляр бота уже запущен — выходим")
+        return 0
     state = build_state(config)
 
     notifier: TelegramClient | None = None
@@ -435,8 +461,11 @@ def cmd_run(args: argparse.Namespace) -> int:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
+            pass
+        finally:
             service.stop()
-            return 0
+            lock.release()
+        return 0
 
     application = Application.builder().token(config.telegram.bot_token).build()
     pairing = PairingStore(config.pairing_path)
@@ -456,6 +485,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         pass
     finally:
         service.stop()
+        lock.release()
     return 0
 
 

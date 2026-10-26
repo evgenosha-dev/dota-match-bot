@@ -69,6 +69,18 @@ def test_fresh_found_event_notifies_again(tmp_path: Path):
     assert len(telegram.sent) == 2
 
 
+def test_fresh_found_twice_notifies_both(tmp_path: Path):
+    # Два свежих эпизода подряд (быстрый перезапуск поиска после отмены) —
+    # оба должны уведомить: каждый эпизод кнопки — отдельный матч.
+    service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
+
+    service.handle_event(replace(found_event(), extra={"fresh": True}))
+    service.handle_event(replace(found_event(), extra={"fresh": True}))
+
+    assert len(telegram.sent) == 2
+
+
 def test_non_fresh_duplicate_still_suppressed(tmp_path: Path):
     service, telegram = make_service(tmp_path)
     service.config.telegram.notify_match_finished = False

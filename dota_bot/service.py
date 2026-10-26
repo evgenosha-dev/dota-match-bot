@@ -23,8 +23,10 @@ log = logging.getLogger(__name__)
 
 ENRICH_WINDOW_SECONDS = 900
 FINISHED_DEDUPE_SECONDS = 21600
-FOUND_SUPPRESS_SECONDS = 900
-FOUND_EXPIRE_SECONDS = 240
+# Короткое in-memory окно только для не-fresh повторов внутри одного эпизода
+# кнопки. Свежий эпизод (окно «Принять» исчезло и появилось новое) всегда
+# уведомляет — иначе отменённый и мгновенно перезапущенный поиск терялся.
+FOUND_REPEAT_WINDOW_SECONDS = 60
 
 # Уведомление «матч найден» отправляется только при обнаружении реальной
 # кнопки «Принять» через UI Automation. Сигналы вроде «Dota вышла на
@@ -130,26 +132,13 @@ class MatchService:
             log.debug("Пропущено: матч был недавно")
             return
         fresh = bool(event.extra.get("fresh"))
-        key = "match_found"
         if fresh:
             # Кнопка исчезла и появилась заново (отмена матча + новый поиск):
-            # это точно новый матч, дедупликация по времени неуместна.
+            # это новый матч — уведомляем всегда, окно дедупликации неуместно.
             log.info("Новый эпизод кнопки «Принять» — уведомляем без окна дедупликации")
-        else:
-            if self._last_found_at and now - self._last_found_at > FOUND_EXPIRE_SECONDS:
-                self.state.clear("match_found")
-                self._last_found_at = None
-            if self._last_found_at and now - self._last_found_at <= FOUND_EXPIRE_SECONDS:
-                key = "match_found"
-                if not self.state.should_notify(key, FOUND_EXPIRE_SECONDS):
-                    log.info("Пропущено дублирующее уведомление о найденном матче")
-                    return
-            key = "match_found"
-            window = max(self.config.dedupe_window_seconds, FOUND_SUPPRESS_SECONDS)
-            if not self.state.should_notify(key, window):
-                log.info("Пропущено дублирующее уведомление о найденном матче")
-                return
-        self.state.mark(key)
+        elif self._last_found_at and now - self._last_found_at < FOUND_REPEAT_WINDOW_SECONDS:
+            log.info("Пропущено дублирующее уведомление о найденном матче")
+            return
         self.state.bump("matches_found")
         remote = self.config.remote_control.enabled
         message_id = self._send(
