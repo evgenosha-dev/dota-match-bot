@@ -467,20 +467,35 @@ def cmd_run(args: argparse.Namespace) -> int:
             lock.release()
         return 0
 
-    application = Application.builder().token(config.telegram.bot_token).build()
     pairing = PairingStore(config.pairing_path)
     pairing.load()
-    application.bot_data["service"] = service
-    application.bot_data["state"] = state
-    application.bot_data["config"] = config
-    application.bot_data["pairing"] = pairing
-    application.add_handler(CallbackQueryHandler(tg_on_callback))
-    application.add_handler(CommandHandler("start", tg_cmd_start))
-    application.add_handler(CommandHandler("on", tg_cmd_on))
-    application.add_handler(CommandHandler("off", tg_cmd_off))
+
+    def _build_application() -> Application:
+        app = Application.builder().token(config.telegram.bot_token).build()
+        app.bot_data["service"] = service
+        app.bot_data["state"] = state
+        app.bot_data["config"] = config
+        app.bot_data["pairing"] = pairing
+        app.add_handler(CallbackQueryHandler(tg_on_callback))
+        app.add_handler(CommandHandler("start", tg_cmd_start))
+        app.add_handler(CommandHandler("on", tg_cmd_on))
+        app.add_handler(CommandHandler("off", tg_cmd_off))
+        return app
+
     log.info("Бот запущен, ожидаю матчи")
     try:
-        application.run_polling()
+        # Сетевые сбои Telegram (таймауты, 5xx) не должны убивать фонового
+        # бота: пересоздаём Application и продолжаем опрос.
+        while True:
+            application = _build_application()
+            try:
+                application.run_polling()
+                break  # штатная остановка
+            except Exception as exc:
+                # Любой сбой опроса (таймауты, сетевые ошибки) — повод
+                # перезапустить, а не умирать молча в фоне.
+                log.warning("Опрос Telegram прерван (%s) — перезапуск через 5 с", exc)
+                time.sleep(5)
     except KeyboardInterrupt:
         pass
     finally:
