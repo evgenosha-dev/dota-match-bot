@@ -9,7 +9,7 @@ cv2 = pytest.importorskip("cv2")
 np = pytest.importorskip("numpy")
 
 
-def _window_with_green_button(
+def _screen_with_green_button(
     width: int = 1920, height: int = 1080, button_w: int = 400, button_h: int = 110
 ):
     img = np.full((height, width, 3), 30, np.uint8)
@@ -22,18 +22,29 @@ def _window_with_green_button(
 
 
 def test_detects_green_accept_button():
-    assert has_accept_button(_window_with_green_button()) is True
+    found, _ = has_accept_button(_screen_with_green_button())
+    assert found is True
 
 
 def test_no_button_no_detection():
     img = np.full((1080, 1920, 3), 30, np.uint8)
-    assert has_accept_button(img) is False
+    found, stats = has_accept_button(img)
+    assert found is False
+    assert stats["green_px"] == 0
 
 
-def test_small_window_rejected():
-    img = np.full((300, 400, 3), 30, np.uint8)
-    cv2.rectangle(img, (130, 130), (270, 170), (60, 180, 60), -1)
-    assert has_accept_button(img) is False
+def test_button_outside_center_region_ignored():
+    # Кнопка у края экрана (миникарта и пр.) не должна детектиться.
+    img = np.full((1080, 1920, 3), 30, np.uint8)
+    cv2.rectangle(img, (30, 900), (300, 1000), (60, 180, 60), -1)
+    found, _ = has_accept_button(img)
+    assert found is False
+
+
+def test_small_screen_rejected():
+    img = np.full((400, 640, 3), 30, np.uint8)
+    found, _ = has_accept_button(img)
+    assert found is False
 
 
 def test_single_observation_does_not_emit():

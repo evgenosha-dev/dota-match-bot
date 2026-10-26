@@ -1,118 +1,101 @@
 from __future__ import annotations
 
 import logging
-import os
-import sys
 import time
-from typing import Iterable
 
 from ..models import EventType, MatchEvent
 from .base import BaseDetector
 
 log = logging.getLogger(__name__)
 
-PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-
 # Зелёная кнопка «Принять» в HSV (Dota 2: насыщенный зелёный).
 GREEN_HSV_LOWER = (35, 80, 80)
 GREEN_HSV_UPPER = (90, 255, 255)
-# Доля от ширины окна: кнопка принятия занимает примерно 12–35% ширины
-# и 4–14% высоты. Пороги масштабируются под разрешение.
-BUTTON_MIN_W_FRAC = 0.06
-BUTTON_MAX_W_FRAC = 0.45
-BUTTON_MIN_H_FRAC = 0.04
-BUTTON_MAX_H_FRAC = 0.20
+
+# Где на экране искать: accept-диалог появляется в центре экрана.
+CENTER_X1_FRAC = 0.20
+CENTER_X2_FRAC = 0.80
+CENTER_Y1_FRAC = 0.30
+CENTER_Y2_FRAC = 0.80
+
+# Пропорции кнопки относительно центрального региона.
+BUTTON_MIN_W_FRAC = 0.10
+BUTTON_MAX_W_FRAC = 0.90
+BUTTON_MIN_H_FRAC = 0.05
+BUTTON_MAX_H_FRAC = 0.55
+BUTTON_MIN_AREA_FRAC = 0.003  # минимум 0.3% площади региона
+BUTTON_MIN_ASPECT = 1.8
+BUTTON_MAX_ASPECT = 9.0
 
 
-def _load_win32():
-    if sys.platform != "win32":
-        return None
-    import ctypes
-    from ctypes import wintypes
+def _deps():
+    import cv2  # type: ignore
+    import numpy as np  # type: ignore
+    import pyautogui  # type: ignore
 
-    user32 = ctypes.WinDLL("user32", use_last_error=True)
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-
-    user32.EnumWindows.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-    user32.EnumWindows.restype = wintypes.BOOL
-    user32.IsWindowVisible.argtypes = [ctypes.c_void_p]
-    user32.IsWindowVisible.restype = wintypes.BOOL
-    user32.GetWindowThreadProcessId.argtypes = [ctypes.c_void_p, ctypes.POINTER(wintypes.DWORD)]
-    user32.GetWindowThreadProcessId.restype = wintypes.DWORD
-    user32.GetWindowRect.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_long * 4)]
-    user32.GetWindowRect.restype = wintypes.BOOL
-
-    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
-    kernel32.OpenProcess.restype = wintypes.HANDLE
-    kernel32.QueryFullProcessImageNameW.argtypes = [
-        wintypes.HANDLE,
-        wintypes.DWORD,
-        wintypes.LPWSTR,
-        ctypes.POINTER(wintypes.DWORD),
-    ]
-    kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
-    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-    kernel32.CloseHandle.restype = wintypes.BOOL
-    return ctypes, wintypes, user32, kernel32
+    return cv2, np, pyautogui
 
 
-class DotaWindowFinder:
-    """Находит видимое окно процесса Dota 2 и отдаёт его экранный прямоугольник."""
+def has_accept_button(img_bgr) -> tuple[bool, dict]:
+    """Ищет зелёную кнопку «Принять» в центральном регионе скриншота.
 
-    def __init__(self, process_names: Iterable[str]):
-        self._api = _load_win32()
-        self._targets = {name.strip().lower() for name in process_names if name.strip()}
+    Принимает полный скриншот экрана (OpenCV BGR). Возвращает
+    (найдено ли, статистика для диагностики).
+    """
+    import cv2  # type: ignore
+    import numpy as np  # type: ignore
 
-    @property
-    def available(self) -> bool:
-        return self._api is not None
+    stats: dict = {"screen_w": 0, "screen_h": 0, "green_px": 0, "candidates": 0}
+    h, w = img_bgr.shape[:2]
+    stats["screen_w"], stats["screen_h"] = w, h
+    if w < 1024 or h < 768:
+        return False, stats
 
-    def find_rect(self) -> tuple[int, int, int, int] | None:
-        """Возвращает (left, top, width, height) окна Dota 2 или None."""
-        if self._api is None:
-            return None
-        ctypes, wintypes, user32, kernel32 = self._api
-        result: list[tuple[int, int, int, int]] = []
+    rx1, rx2 = int(w * CENTER_X1_FRAC), int(w * CENTER_X2_FRAC)
+    ry1, ry2 = int(h * CENTER_Y1_FRAC), int(h * CENTER_Y2_FRAC)
+    region = img_bgr[ry1:ry2, rx1:rx2]
+    rh, rw = region.shape[:2]
 
-        @ctypes.WINFUNCTYPE(wintypes.BOOL, ctypes.c_void_p, ctypes.c_void_p)
-        def enum_proc(hwnd, lparam):
-            if not user32.IsWindowVisible(hwnd):
-                return True
-            pid = wintypes.DWORD()
-            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-            if not pid.value:
-                return True
-            handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid.value)
-            if not handle:
-                return True
-            try:
-                size = wintypes.DWORD(1024)
-                buffer = ctypes.create_unicode_buffer(size.value)
-                if not kernel32.QueryFullProcessImageNameW(handle, 0, buffer, ctypes.byref(size)):
-                    return True
-                name = os.path.basename(buffer.value).lower()
-                if name in self._targets:
-                    rect = (ctypes.c_long * 4)()
-                    if user32.GetWindowRect(hwnd, rect):
-                        w = int(rect[2]) - int(rect[0])
-                        h = int(rect[3]) - int(rect[1])
-                        if w > 0 and h > 0:
-                            result.append((int(rect[0]), int(rect[1]), w, h))
-            finally:
-                kernel32.CloseHandle(handle)
-            return True
+    hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(
+        hsv,
+        np.array(GREEN_HSV_LOWER, dtype=np.uint8),
+        np.array(GREEN_HSV_UPPER, dtype=np.uint8),
+    )
+    green_px = int(mask.sum() // 255)
+    stats["green_px"] = green_px
+    if green_px < 2000:
+        return False, stats
 
-        user32.EnumWindows(enum_proc, 0)
-        if not result:
-            return None
-        # Берём самое большое окно Dota (на случай нескольких процессов).
-        return max(result, key=lambda r: r[2] * r[3])
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    min_area = rw * rh * BUTTON_MIN_AREA_FRAC
+    for c in cnts:
+        area = cv2.contourArea(c)
+        if area < min_area:
+            continue
+        bx, by, bw, bh = cv2.boundingRect(c)
+        stats["candidates"] += 1
+        if not (rw * BUTTON_MIN_W_FRAC <= bw <= rw * BUTTON_MAX_W_FRAC):
+            continue
+        if not (rh * BUTTON_MIN_H_FRAC <= bh <= rh * BUTTON_MAX_H_FRAC):
+            continue
+        aspect = bw / max(bh, 1)
+        if not (BUTTON_MIN_ASPECT <= aspect <= BUTTON_MAX_ASPECT):
+            continue
+        fill = area / max(bw * bh, 1)
+        if fill < 0.55:
+            continue
+        return True, stats
+    return False, stats
 
 
 class AcceptConfirmationStateMachine:
     """Подтверждает сигнал кнопки «Принять» серией стабильных опросов.
 
-    Одиночный ложный срабатывание анализа скриншота не должно отправлять
+    Одиночный ложный срабатывание анализа экрана не должно отправлять
     уведомление: кнопка должна оставаться на экране `confirmations` опросов
     подряд. Повторное подтверждение в пределах cooldown подавляется.
     """
@@ -143,11 +126,12 @@ class AcceptConfirmationStateMachine:
 
 
 class AcceptUiDetector(BaseDetector):
-    """Детектирует зелёную кнопку «Принять» на скриншоте окна Dota 2.
+    """Детектирует экран принятия матча по скриншоту центра экрана.
 
-    Dota 2 (SDL) не отдаёт свой интерфейс через UI Automation, поэтому
-    детекция идёт по изображению: ищется крупный зелёный прямоугольник
-    пропорций кнопки принятия.
+    Dota 2 (SDL) не отдаёт интерфейс через UI Automation, поэтому детекция
+    идёт по изображению: зелёная кнопка «Принять» всегда появляется в центре
+    экрана, её форма и цвет узнаются по цветовой маске. Привязки к окну,
+    PID или фокусу нет — детектор смотрит на экран как человек.
     """
 
     name = "accept_button"
@@ -155,45 +139,42 @@ class AcceptUiDetector(BaseDetector):
     def __init__(
         self,
         sink,
-        process_names: Iterable[str] = ("dota2.exe",),
         poll_interval_ms: int = 250,
         cooldown_seconds: float = 90.0,
         required_confirmations: int = 3,
     ):
         super().__init__(sink)
-        self._finder = DotaWindowFinder(process_names)
         self._poll_interval = max(poll_interval_ms, 150) / 1000
         self._confirmation = AcceptConfirmationStateMachine(
             confirmations=required_confirmations,
             cooldown_seconds=cooldown_seconds,
         )
 
-    def _detect_accept_button(self, rect: tuple[int, int, int, int]) -> bool:
-        try:
-            import cv2  # type: ignore
-            import numpy as np  # type: ignore
-            import pyautogui  # type: ignore
-        except Exception as exc:
-            log.error("accept_button: не хватает зависимостей (pyautogui, opencv-python, numpy, pillow): %s", exc)
-            raise
-
-        x, y, w, h = rect
-        if w < 800 or h < 600:
-            return False
-        screenshot = pyautogui.screenshot(region=(x, y, w, h))
-        img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
-        return has_accept_button(img)
-
     def run(self) -> None:
-        if not self._finder.available:
-            log.error("accept_button работает только на Windows")
+        try:
+            cv2, np, pyautogui = _deps()
+        except Exception as exc:
+            log.error(
+                "accept_button: не хватает зависимостей (%s). "
+                "Выполни: .\\.venv\\Scripts\\python.exe -m pip install -r requirements.txt",
+                exc,
+            )
             return
-        log.info("Ожидаю появление кнопки «Принять» в окне Dota 2")
+        log.info("Детектор кнопки «Принять» запущен: анализ экрана каждые %.0f мс", self._poll_interval * 1000)
+        last_heartbeat = 0.0
         while not self.stopping:
             try:
-                rect = self._finder.find_rect()
-                has_accept = bool(rect) and self._detect_accept_button(rect)
+                screenshot = pyautogui.screenshot()
+                img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+                has_accept, stats = has_accept_button(img)
                 now = time.time()
+                if now - last_heartbeat >= 10:
+                    last_heartbeat = now
+                    log.info(
+                        "accept_button: экран %dx%d, зелёных пикселей в центре: %d, кандидатов: %d",
+                        stats["screen_w"], stats["screen_h"],
+                        stats["green_px"], stats["candidates"],
+                    )
                 if self._confirmation.observe(has_accept, now):
                     log.info("Обнаружена кнопка «Принять» — матч найден")
                     self.emit(
@@ -206,48 +187,3 @@ class AcceptUiDetector(BaseDetector):
             except Exception:
                 log.debug("Ошибка accept_button", exc_info=True)
             time.sleep(self._poll_interval)
-
-
-def has_accept_button(img_bgr) -> bool:
-    """True, если на изображении окна Dota 2 есть зелёная кнопка «Принять».
-
-    Чистая функция над массивом OpenCV (BGR) — без скриншота, чтобы её
-    можно было тестировать на синтетических изображениях.
-    """
-    import cv2  # type: ignore
-    import numpy as np  # type: ignore
-
-    h, w = img_bgr.shape[:2]
-    if w < 800 or h < 600:
-        return False
-    hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(
-        hsv,
-        np.array(GREEN_HSV_LOWER, dtype=np.uint8),
-        np.array(GREEN_HSV_UPPER, dtype=np.uint8),
-    )
-    kernel = np.ones((5, 5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    min_w, max_w = w * BUTTON_MIN_W_FRAC, w * BUTTON_MAX_W_FRAC
-    min_h, max_h = h * BUTTON_MIN_H_FRAC, h * BUTTON_MAX_H_FRAC
-    for c in cnts:
-        if cv2.contourArea(c) < 1500:
-            continue
-        bx, by, bw, bh = cv2.boundingRect(c)
-        if not (min_w <= bw <= max_w and min_h <= bh <= max_h):
-            continue
-        # Берём ROI с отступом: у однотонно залитой кнопки граница совпадает
-        # с краем bbox, и Canny без отступа не видит градиента.
-        pad = max(4, int(0.08 * bw))
-        px1, py1 = max(0, bx - pad), max(0, by - pad)
-        px2, py2 = min(w, bx + bw + pad), min(h, by + bh + pad)
-        roi = img_bgr[py1:py2, px1:px2]
-        if roi.size == 0:
-            continue
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(gray, 50, 150)
-        if edges.sum() > 500:
-            return True
-    return False

@@ -59,7 +59,6 @@ class MatchService:
                 self._detectors.append(
                     AcceptUiDetector(
                         self._queue,
-                        process_names=cfg.foreground.process_names,
                         poll_interval_ms=250,
                         cooldown_seconds=90,
                     )
