@@ -26,6 +26,17 @@ def test_detects_green_accept_button():
     assert found is True
 
 
+def test_detects_real_dark_green_accept_button():
+    # Реальная кнопка «Принять» из Dota 2: тёмно-зелёная (RGB ~71/100/88),
+    # широкая (~4.5:1). Регрессионный тест по скриншоту пользователя.
+    img = np.full((1080, 1920, 3), 22, np.uint8)
+    bw, bh = 620, 140
+    x1, y1 = (1920 - bw) // 2, (1080 - bh) // 2 - 40
+    cv2.rectangle(img, (x1, y1), (x1 + bw, y1 + bh), (85, 100, 60), -1)
+    found, _ = has_accept_button(img)
+    assert found is True
+
+
 def test_no_button_no_detection():
     img = np.full((1080, 1920, 3), 30, np.uint8)
     found, stats = has_accept_button(img)
