@@ -1,11 +1,17 @@
 # конфигурация dota-match-bot
 {
   "telegram": {
-    "bot_token": "8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo",
+    "bot_token": "",
     "chat_id": "",
     "notify_match_found": true,
     "notify_match_finished": true,
     "request_timeout_seconds": 10
+  },
+  "relay": {
+    "enabled": false,
+    "url": "",
+    "token": "",
+    "poll_interval_seconds": 5
   },
   "foreground": {
     "enabled": true,

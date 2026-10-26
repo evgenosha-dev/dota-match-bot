@@ -30,6 +30,50 @@ HELP_TEXT = (
 )
 
 
+def normalize_command(text: str) -> str:
+    """Первое слово команды без упоминания бота: '/on@Bot' -> '/on'.
+
+    Пустая строка, если текст — не команда (не начинается с '/')."""
+    parts = str(text or "").strip().split()
+    if not parts or not parts[0].startswith("/"):
+        return ""
+    return parts[0].split("@", 1)[0].lower()
+
+
+def command_reply(state: StateStore, text: str) -> str | None:
+    """Обрабатывает команду пользователя. Возвращает текст ответа или None."""
+    command = normalize_command(text)
+    if command == "/start":
+        return HELP_TEXT
+    if command == "/on":
+        state.set_flag("notifications_enabled", True)
+        state.save()
+        return "🔔 Уведомления включены."
+    if command == "/off":
+        state.set_flag("notifications_enabled", False)
+        state.save()
+        return "🔕 Уведомления выключены."
+    return None
+
+
+def accept_result(config, chat_id: str) -> tuple[str, bool] | None:
+    """Выполняет локальное автопринятие. (текст ответа, принято?) или None."""
+    if not config.remote_control.enabled:
+        return ("Автопринятие выключено.", False)
+    # В релей-режиме chat_id живёт на сервере и входящие уже отфильтрованы
+    # релеем; в прямом режиме проверяем владельца вручную.
+    if config.telegram.chat_id and str(chat_id) != str(config.telegram.chat_id):
+        return ("Кнопка доступна только владельцу бота.", False)
+    result = accept_match(
+        config.remote_control.process_name,
+        config.remote_control.focus_window,
+    )
+    log.info("Запрос автопринятия: %s", result.value)
+    return (ACCEPT_RESULT_MESSAGES[result], result is InputResult.ACCEPTED)
+
+
+# ── обёртки для python-telegram-bot (прямой режим) ──
+
 def _state(context: ContextTypes.DEFAULT_TYPE) -> StateStore | None:
     return context.application.bot_data.get("state")
 
@@ -68,25 +112,17 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
 
     config = context.application.bot_data.get("config")
-    if config is None or not config.remote_control.enabled:
-        await query.answer("Автопринятие выключено.", show_alert=True)
+    if config is None:
+        await query.answer("Ошибка конфигурации.", show_alert=True)
         return
     chat_id = query.message.chat_id if query.message else None
-    if str(chat_id) != str(config.telegram.chat_id):
-        await query.answer("Кнопка доступна только владельцу бота.", show_alert=True)
+    result = accept_result(config, str(chat_id))
+    if result is None:
+        await query.answer()
         return
-
-    result = await asyncio.to_thread(
-        accept_match,
-        config.remote_control.process_name,
-        config.remote_control.focus_window,
-    )
-    log.info("Запрос автопринятия: %s", result.value)
-    await query.answer(
-        ACCEPT_RESULT_MESSAGES[result],
-        show_alert=result is not InputResult.ACCEPTED,
-    )
-    if result is InputResult.ACCEPTED:
+    text, accepted = result
+    await query.answer(text, show_alert=not accepted)
+    if accepted:
         try:
             await query.edit_message_reply_markup(reply_markup=None)
         except Exception:
@@ -97,15 +133,15 @@ async def cmd_on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     state = _state(context)
     if state is None:
         return
-    state.set_flag("notifications_enabled", True)
-    state.save()
-    await update.message.reply_text("🔔 Уведомления включены.")
+    reply = command_reply(state, "/on")
+    if reply:
+        await update.message.reply_text(reply)
 
 
 async def cmd_off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     state = _state(context)
     if state is None:
         return
-    state.set_flag("notifications_enabled", False)
-    state.save()
-    await update.message.reply_text("🔕 Уведомления выключены.")
+    reply = command_reply(state, "/off")
+    if reply:
+        await update.message.reply_text(reply)

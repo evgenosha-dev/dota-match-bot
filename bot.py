@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import secrets
 import sys
 import threading
 import time
@@ -26,6 +27,7 @@ from dota_bot.autostart import (
     start_background,
     stop_running_instance,
 )
+from dota_bot.commands import accept_result, command_reply
 from dota_bot.config import (
     ConfigError,
     BotConfig,
@@ -38,6 +40,7 @@ from dota_bot.detectors.gsi import write_gsi_config
 from dota_bot.formatting import format_test_message
 from dota_bot.pairing import PairingStore
 from dota_bot.paths import find_dota_dir, steamid_from_url
+from dota_bot.relay_client import RelayClient, RelayError
 from dota_bot.service import MatchService
 from dota_bot.state import StateStore
 from dota_bot.telegram_client import TelegramClient, TelegramError
@@ -94,63 +97,118 @@ def cmd_setup(args: argparse.Namespace) -> int:
     setup_logging(config.log_level)
 
     print("=" * 52)
-    print("  Dota Match Bot — привязка по коду")
+    print("  Dota Match Bot — настройка")
     print("=" * 52)
 
     print("\nШаг 1/5. Telegram")
-    print("Используем общий бот @BflyDotaBot")
-    token = config.telegram.bot_token or "8498537696:AAHQDDIRCDyNQYiiwMGQpsud47ch7bJKPXo"
-    client = TelegramClient(token, timeout=config.telegram.request_timeout_seconds)
-    try:
-        me = client.get_me()
-    except TelegramError as exc:
-        print(f"Не удалось подключиться к боту: {exc}", file=sys.stderr)
-        return 3
-    print(f"Бот: @{me.get('username')}")
+    print("Режим с сервером привязки: через одного общего бота работает любое")
+    print("число людей одновременно; токен бота хранится только на сервере.")
+    relay_url = (
+        getattr(args, "relay_url", None)
+        or os.environ.get("DOTA_BOT_RELAY_URL")
+        or config.relay.url
+        or _prompt("Адрес сервера привязки (Enter — свой личный бот от @BotFather): ")
+    ).strip()
 
+    updates: dict[str, dict] = {}
     chat_id = (
         getattr(args, "chat_id", None)
         or os.environ.get("DOTA_BOT_TELEGRAM_CHAT_ID")
         or config.telegram.chat_id
     )
-    if not chat_id:
-        if sys.platform == "win32":
-            # Фоновый бот держит опрос getUpdates — одновременный опрос
-            # мастером даёт 409 Conflict. Останавливаем бота на время
-            # настройки, в конце мастер запустит его заново.
-            stopped_pid = stop_running_instance(PROJECT_ROOT)
-            if stopped_pid:
-                print("Остановлен фоновый бот (на время настройки, запустится снова в конце).")
-        store = PairingStore(config.pairing_path)
-        store.load()
-        code = store.create_code()
-        print("\n" + "=" * 52)
-        print(f"КОД ПРИВЯЗКИ: {code}")
-        print("=" * 52)
-        print("\n1. Открой @BflyDotaBot")
-        print(f"2. Напиши: /start {code}")
-        print("3. Код одноразовый, срока действия нет")
-        print("4. Мастер ждёт подтверждение автоматически")
-        print("\nЖду привязку Telegram...")
-        try:
-            chat_id = _wait_for_pairing(client, store, code, timeout_seconds=180)
-        except TelegramError as exc:
-            print(f"Не удалось дождаться Telegram: {exc}", file=sys.stderr)
-            return 3
-        if not chat_id:
-            print(
-                "Время ожидания вышло, но код остаётся действительным — "
-                "просто запусти setup ещё раз, новый код не понадобится.",
-                file=sys.stderr,
-            )
-            return 2
-        print(f"Привязан chat_id: {chat_id}")
-    else:
-        print(f"Chat ID уже настроен: {chat_id}")
 
-    updates: dict[str, dict] = {
-        "telegram": {"bot_token": token, "chat_id": str(chat_id)}
-    }
+    if relay_url:
+        relay_token = config.relay.token or secrets.token_hex(16)
+        relay = RelayClient(
+            relay_url, relay_token, timeout=config.telegram.request_timeout_seconds
+        )
+        updates["relay"] = {"enabled": True, "url": relay_url, "token": relay_token}
+        if config.relay.enabled and chat_id:
+            print("Telegram уже привязан через сервер привязки.")
+        else:
+            try:
+                pairing = relay.create_pairing()
+            except RelayError as exc:
+                print(f"Не удалось связаться с сервером привязки: {exc}", file=sys.stderr)
+                return 3
+            code = str(pairing.get("code") or "")
+            username = pairing.get("bot_username") or "bot"
+            print("\n" + "=" * 52)
+            print(f"КОД ПРИВЯЗКИ: {code}")
+            print("=" * 52)
+            print(f"\n1. Открой @{username} в Telegram")
+            print(f"2. Напиши: /start {code}")
+            print("3. Мастер ждёт подтверждение автоматически")
+            print("\nЖду привязку Telegram...")
+            chat_id = relay.wait_chat_id(timeout_seconds=180)
+            if not chat_id:
+                print(
+                    "Время ожидания вышло — запусти setup ещё раз, код сохранится.",
+                    file=sys.stderr,
+                )
+                return 2
+            print(f"Привязан chat_id: {chat_id}")
+        updates["telegram"] = {"bot_token": "", "chat_id": str(chat_id)}
+        send_test = lambda text: relay.send_message(str(chat_id), text)
+    else:
+        token = (
+            getattr(args, "token", None)
+            or os.environ.get("DOTA_BOT_TELEGRAM_TOKEN")
+            or config.telegram.bot_token
+        )
+        client: TelegramClient | None = None
+        while client is None:
+            if not token:
+                token = _prompt("Токен своего бота от @BotFather (/newbot): ")
+            if not token:
+                print("Токен обязателен — вставь его сюда (Ctrl+V) и нажми Enter.")
+                continue
+            candidate = TelegramClient(
+                token.strip(), timeout=config.telegram.request_timeout_seconds
+            )
+            try:
+                me = candidate.get_me()
+                client = candidate
+            except TelegramError as exc:
+                print(f"Telegram не принял токен: {exc}")
+                token = None
+        print(f"Бот: @{me.get('username')}")
+        if not chat_id:
+            if sys.platform == "win32":
+                # Фоновый бот держит опрос getUpdates — одновременный опрос
+                # мастером даёт 409 Conflict. Останавливаем бота на время
+                # настройки, в конце мастер запустит его заново.
+                stopped_pid = stop_running_instance(PROJECT_ROOT)
+                if stopped_pid:
+                    print("Остановлен фоновый бот (на время настройки, запустится снова в конце).")
+            store = PairingStore(config.pairing_path)
+            store.load()
+            code = store.create_code()
+            print("\n" + "=" * 52)
+            print(f"КОД ПРИВЯЗКИ: {code}")
+            print("=" * 52)
+            print(f"\n1. Открой @{me.get('username')}")
+            print(f"2. Напиши: /start {code}")
+            print("3. Код одноразовый, срока действия нет")
+            print("4. Мастер ждёт подтверждение автоматически")
+            print("\nЖду привязку Telegram...")
+            try:
+                chat_id = _wait_for_pairing(client, store, code, timeout_seconds=180)
+            except TelegramError as exc:
+                print(f"Не удалось дождаться Telegram: {exc}", file=sys.stderr)
+                return 3
+            if not chat_id:
+                print(
+                    "Время ожидания вышло, но код остаётся действительным — "
+                    "просто запусти setup ещё раз, новый код не понадобится.",
+                    file=sys.stderr,
+                )
+                return 2
+            print(f"Привязан chat_id: {chat_id}")
+        else:
+            print(f"Chat ID уже настроен: {chat_id}")
+        updates["telegram"] = {"bot_token": token, "chat_id": str(chat_id)}
+        send_test = lambda text: client.send_message(str(chat_id), text)
 
     print("\nШаг 2/5. Steam")
     print("Ключ: https://steamcommunity.com/dev/apikey — обязателен для статуса «в игре».")
@@ -237,9 +295,9 @@ def cmd_setup(args: argparse.Namespace) -> int:
         return 2
 
     try:
-        client.send_message(str(chat_id), format_test_message())
+        send_test(format_test_message())
         print("Тестовое уведомление отправлено в Telegram.")
-    except TelegramError as exc:
+    except (TelegramError, RelayError) as exc:
         print(f"Не удалось отправить тест: {exc}", file=sys.stderr)
         return 3
 
@@ -422,6 +480,82 @@ def _has_console() -> bool:
     return sys.stdin is not None and sys.stdout is not None
 
 
+def _accept_window_open(service: MatchService) -> bool:
+    """Открыто ли окно приёма: после уведомления с кнопкой «Принять матч»."""
+    if not service.config.remote_control.enabled:
+        return False
+    last = service._last_found_message
+    if not last or not last.get("sent_at"):
+        return False
+    return time.time() - float(last["sent_at"]) < 15
+
+
+def _dispatch_relay_item(config, service, state, relay, item: dict) -> None:
+    kind = item.get("type")
+    if kind == "command":
+        reply = command_reply(state, str(item.get("text") or ""))
+        if reply:
+            try:
+                relay.send_message(config.telegram.chat_id, reply)
+            except RelayError as exc:
+                log.warning("Не удалось ответить на команду: %s", exc)
+        return
+    if kind == "accept":
+        result = accept_result(config, config.telegram.chat_id)
+        if result is None:
+            return
+        text, accepted = result
+        callback_id = str(item.get("callback_id") or "")
+        if callback_id:
+            try:
+                relay.answer_callback(callback_id, text, alert=not accepted)
+            except RelayError as exc:
+                log.debug("answer_callback: %s", exc)
+        if accepted:
+            try:
+                relay.edit_message_reply_markup(config.telegram.chat_id, 0)
+            except RelayError as exc:
+                log.debug("edit_markup: %s", exc)
+
+
+def _run_relay_mode(config: BotConfig, service_state, lock: SingleInstance) -> int:
+    """Режим общего бота: команды и кнопки приходят через релей, уведомления
+    уходят через релей же. getUpdates бота опрашивает только сервер."""
+    relay = RelayClient(
+        config.relay.url,
+        config.relay.token,
+        timeout=config.telegram.request_timeout_seconds,
+    )
+    service = MatchService(config, relay, service_state)
+    service.start()
+    thread = threading.Thread(target=service.run_forever, name="match-service", daemon=True)
+    thread.start()
+
+    cursor = int(service_state.get_value("relay_cursor", 0) or 0)
+    interval = max(config.relay.poll_interval_seconds, 1.0)
+    log.info("Релей-режим: %s (опрос каждые %.0f с)", config.relay.url, interval)
+    log.info("Бот запущен, ожидаю матчи")
+    try:
+        while True:
+            try:
+                items, cursor = relay.fetch_updates(cursor)
+                service_state.set_flag("relay_cursor", cursor)
+                service_state.save()
+                for item in items:
+                    _dispatch_relay_item(config, service, service_state, relay, item)
+            except Exception as exc:
+                log.warning("Релей недоступен (%s) — повтор через 15 с", exc)
+                time.sleep(15)
+                continue
+            time.sleep(0.7 if _accept_window_open(service) else interval)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        service.stop()
+        lock.release()
+    return 0
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     from telegram.ext import Application, CallbackQueryHandler, CommandHandler
 
@@ -452,6 +586,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         log.info("Экземпляр бота уже запущен — выходим")
         return 0
     state = build_state(config)
+
+    if config.relay.enabled and not args.no_telegram:
+        return _run_relay_mode(config, service_state=state, lock=lock)
 
     notifier: TelegramClient | None = None
     if not args.no_telegram:
@@ -646,7 +783,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="мастер настройки: Telegram, Steam, GSI, автопринятие",
         parents=[common],
     )
-    setup.add_argument("--token", help="токен от @BotFather")
+    setup.add_argument("--token", help="токен от @BotFather (режим своего бота)")
+    setup.add_argument("--relay-url", help="адрес сервера привязки (режим общего бота)")
     setup.add_argument("--chat-id", help="chat_id получателя (если известен — вводить не нужно)")
     setup.add_argument("--steam-api-key", help="ключ Steam Web API")
     setup.add_argument("--steam-id", help="ссылка на профиль Steam, steamid64 или account_id")

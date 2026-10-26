@@ -17,3 +17,11 @@ dist/
 
 # Логи содержат токены — не коммитить
 logs/
+
+# Локальный экземпляр
+run.lock
+config.json
+state.json
+
+# База релея
+relay/relay.db*

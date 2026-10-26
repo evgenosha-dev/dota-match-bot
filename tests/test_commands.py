@@ -1,34 +1,36 @@
-import bot
-from dota_bot import commands
-from dota_bot.config import BotConfig
-from dota_bot.telegram_client import TelegramError
+from dota_bot.commands import command_reply, normalize_command
+from dota_bot.state import StateStore
 
 
-def test_connect_notifier_retries_transient_failures(monkeypatch):
-    class FlakyTelegram:
-        attempts = 0
-
-        def __init__(self, token, timeout=10.0):
-            pass
-
-        def get_me(self):
-            FlakyTelegram.attempts += 1
-            if FlakyTelegram.attempts < 3:
-                raise TelegramError("timed out")
-            return {"username": "bot"}
-
-    monkeypatch.setattr(bot, "TelegramClient", FlakyTelegram)
-    monkeypatch.setattr(bot.time, "sleep", lambda seconds: None)
-
-    notifier = bot.connect_notifier(BotConfig())
-
-    assert isinstance(notifier, FlakyTelegram)
-    assert FlakyTelegram.attempts == 3
+def test_normalize_command_strips_bot_mention():
+    assert normalize_command("/on@MyDotaBot") == "/on"
+    assert normalize_command("/OFF extra words") == "/off"
+    assert normalize_command("  /start 42") == "/start"
+    assert normalize_command("привет") == ""
+    assert normalize_command("") == ""
 
 
-def test_telegram_handlers_are_not_cli_functions():
-    assert bot.tg_cmd_start is commands.cmd_start
-    assert bot.tg_cmd_on is commands.cmd_on
-    assert callable(bot.cmd_test)
-    for removed in ("cmd_test", "cmd_status", "cmd_help"):
-        assert not hasattr(commands, removed)
+def test_command_reply_on_off_toggles_flag(tmp_path):
+    state = StateStore(tmp_path / "state.json")
+    state.load()
+    state.set_flag("notifications_enabled", True)
+
+    assert command_reply(state, "/off") == "🔕 Уведомления выключены."
+    assert state.get_flag("notifications_enabled") is False
+
+    assert command_reply(state, "/on") == "🔔 Уведомления включены."
+    assert state.get_flag("notifications_enabled") is True
+
+
+def test_command_reply_start_returns_help(tmp_path):
+    state = StateStore(tmp_path / "state.json")
+    state.load()
+    reply = command_reply(state, "/start")
+    assert reply and "/on" in reply
+
+
+def test_command_reply_unknown_is_none(tmp_path):
+    state = StateStore(tmp_path / "state.json")
+    state.load()
+    assert command_reply(state, "/что-то") is None
+    assert command_reply(state, "просто текст") is None

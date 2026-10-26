@@ -79,3 +79,6 @@ class StateStore:
 
     def get_flag(self, name: str, default: bool = True) -> bool:
         return bool(self._data.get("flags", {}).get(name, default))
+
+    def get_value(self, name: str, default: Any = None) -> Any:
+        return self._data.get("flags", {}).get(name, default)

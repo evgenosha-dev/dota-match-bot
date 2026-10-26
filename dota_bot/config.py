@@ -79,6 +79,22 @@ class RemoteControlConfig:
 
 
 @dataclass
+class RelayConfig:
+    """Центральный релей для общего бота.
+
+    В этом режиме токен общего бота хранится только на сервере релея;
+    агент получает уведомления через релей по личному ключу token, а
+    привязка chat_id происходит по коду — без опроса getUpdates агентом,
+    поэтому любое число пользователей работает одновременно без 409.
+    """
+
+    enabled: bool = False
+    url: str = ""
+    token: str = ""
+    poll_interval_seconds: float = 5.0
+
+
+@dataclass
 class BotConfig:
     telegram: TelegramConfig = field(default_factory=TelegramConfig)
     foreground: ForegroundConfig = field(default_factory=ForegroundConfig)
@@ -86,6 +102,7 @@ class BotConfig:
     steam: SteamConfig = field(default_factory=SteamConfig)
     opendota: OpenDotaConfig = field(default_factory=OpenDotaConfig)
     remote_control: RemoteControlConfig = field(default_factory=RemoteControlConfig)
+    relay: RelayConfig = field(default_factory=RelayConfig)
     dedupe_window_seconds: float = 90.0
     state_path: Path = Path("state.json")
     pairing_path: Path = Path("pairing.json")
@@ -191,6 +208,13 @@ def _apply_env(config: BotConfig) -> None:
     pairing_path = os.environ.get("DOTA_BOT_PAIRING_PATH")
     if pairing_path:
         config.pairing_path = Path(pairing_path)
+    relay_url = os.environ.get("DOTA_BOT_RELAY_URL")
+    if relay_url:
+        config.relay.enabled = True
+        config.relay.url = relay_url.rstrip("/")
+    relay_token = os.environ.get("DOTA_BOT_RELAY_TOKEN")
+    if relay_token:
+        config.relay.token = relay_token
 
 
 def update_config_file(path: Path | str | None, updates: dict[str, Any]) -> Path:
@@ -220,10 +244,18 @@ def update_config_file(path: Path | str | None, updates: dict[str, Any]) -> Path
 def validate(config: BotConfig, require_telegram: bool = True, check_detectors: bool = True) -> None:
     problems: list[str] = []
     if require_telegram:
-        if not config.telegram.bot_token:
-            problems.append("Не задан telegram.bot_token")
-        if not config.telegram.chat_id:
-            problems.append("Не задан telegram.chat_id")
+        # В режиме релея токен общего бота живёт на сервере, а chat_id
+        # привязывается через релей — локально они не нужны.
+        if not config.relay.enabled:
+            if not config.telegram.bot_token:
+                problems.append("Не задан telegram.bot_token")
+            if not config.telegram.chat_id:
+                problems.append("Не задан telegram.chat_id")
+        else:
+            if not config.relay.url:
+                problems.append("Включён режим релея, но не задан relay.url")
+            if not config.relay.token:
+                problems.append("Включён режим релея, но не задан relay.token")
     if check_detectors and config.steam.enabled:
         if not config.steam.api_key:
             problems.append("Включён steam-детектор, но не задан steam.api_key")
