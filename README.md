@@ -69,15 +69,16 @@ Telegram ── webhook ──► Релей (бесплатный хостин�
    вводи сам на сайте или в скрипт развёртывания.
 3. Создай Space: **New Space** → имя (например `dota-relay`), License `mit`,
    SDK **Docker**.
-4. В каталоге `relay/` этого репозитория открой `Dockerfile` и подставь свои
-   значения в ENV-строки:
+4. В Space открой **Settings → Secrets and variables → Space secrets** и
+   добавь четыре секрета (они не попадают в код и видны только серверу):
    - `TELEGRAM_TOKEN` — токен общего бота из @BotFather;
-   - `BASE_URL` — `https://ТВОЕ_ИМЯ-ИМЯ_SPACE.hf.space`;
+   - `BASE_URL` — `https://ТВОЯ_ЗАПИСЬ.hf.space` (твой логин и имя Space);
    - `ADMIN_KEY` — случайная строка (например, из `python -c "import secrets;print(secrets.token_urlsafe(16))"`);
    - `WEBHOOK_SECRET` — ещё одна случайная строка (чтобы адрес webhook не угадали).
 5. Загрузи в Space три файла из `relay/`: `Dockerfile`, `relay_server.py`,
    `requirements.txt` (кнопка **Files** → **Add file**, либо `git push`
    в клон Space: `git clone https://huggingface.co/spaces/ТВОЯ_ЗАПИСЬ/dota-relay`).
+   ВАЖНО: файлы Space публичные — никогда не вписывай токены в сам Dockerfile.
 6. Space пересоберётся и запустится; релей сам установит webhook у общего
    бота. Проверка: открой `https://ТВОЯ_ЗАПИСЬ.hf.space/health` — должен
    ответить JSON с `bot_username`.
