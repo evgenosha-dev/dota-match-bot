@@ -9,7 +9,7 @@
   во входящие, которые агенты забирают опросом.
 
 Развёртывание: любой хостинг с Python + Flask (см. README, бесплатный
-вариант — PythonAnywhere). Переменные окружения:
+вариант — Hugging Face Spaces через Docker). Переменные окружения:
 
     TELEGRAM_TOKEN   токен общего бота (хранится ТОЛЬКО здесь)
     BASE_URL         публичный адрес сервиса, напр. https://user.pythonanywhere.com
@@ -422,4 +422,4 @@ if TELEGRAM_TOKEN and BASE_URL:
         log.warning("Автоустановка webhook не удалась (%s) — используй POST /setup-webhook", exc)
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 8080)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 7860)))
