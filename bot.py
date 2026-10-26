@@ -10,6 +10,10 @@ import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+
+# Сервер привязки (общий бот). Зашит в код, чтобы пользователю не приходилось
+# ничего вводить; переопределяется только явно (CLI/переменная окружения).
+DEFAULT_RELAY_URL = "https://bfly123.eu.pythonanywhere.com"
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -101,13 +105,12 @@ def cmd_setup(args: argparse.Namespace) -> int:
     print("=" * 52)
 
     print("\nШаг 1/5. Telegram")
-    print("Режим с сервером привязки: через одного общего бота работает любое")
-    print("число людей одновременно; токен бота хранится только на сервере.")
+    print("Уведомления приходят через общего бота — работает любое число")
+    print("людей одновременно, токен бота хранится только на сервере.")
     relay_url = (
         getattr(args, "relay_url", None)
         or os.environ.get("DOTA_BOT_RELAY_URL")
-        or config.relay.url
-        or _prompt("Адрес сервера привязки (Enter — свой личный бот от @BotFather): ")
+        or DEFAULT_RELAY_URL
     ).strip()
 
     updates: dict[str, dict] = {}
