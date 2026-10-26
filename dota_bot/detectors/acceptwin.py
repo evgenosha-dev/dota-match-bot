@@ -65,24 +65,39 @@ def has_accept_button(img_bgr) -> tuple[bool, dict]:
     Принимает полный скриншот экрана (OpenCV BGR). Возвращает
     (найдено ли, статистика для диагностики).
     """
-    import cv2  # type: ignore
-    import numpy as np  # type: ignore
-
+    h, w = img_bgr.shape[:2]
     stats: dict = {
-        "screen_w": 0,
-        "screen_h": 0,
+        "screen_w": w,
+        "screen_h": h,
         "green_px": 0,
         "candidates": 0,
         "candidate_details": [],
     }
-    h, w = img_bgr.shape[:2]
-    stats["screen_w"], stats["screen_h"] = w, h
     if w < 1024 or h < 768:
         return False, stats
 
     rx1, rx2 = int(w * CENTER_X1_FRAC), int(w * CENTER_X2_FRAC)
     ry1, ry2 = int(h * CENTER_Y1_FRAC), int(h * CENTER_Y2_FRAC)
-    region = img_bgr[ry1:ry2, rx1:rx2]
+    found, region_stats = has_accept_button_in_region(img_bgr[ry1:ry2, rx1:rx2])
+    stats.update(region_stats)
+    return found, stats
+
+
+def has_accept_button_in_region(region) -> tuple[bool, dict]:
+    """Анализирует уже вырезанный центральный регион экрана (OpenCV BGR).
+
+    Рабочая лошадка детектора: полный скриншот не нужен, основное время
+    уходит на захват, поэтому в цикле опроса снимается только регион.
+    Возвращает (найдено ли, статистика для диагностики).
+    """
+    import cv2  # type: ignore
+    import numpy as np  # type: ignore
+
+    stats: dict = {
+        "green_px": 0,
+        "candidates": 0,
+        "candidate_details": [],
+    }
     rh, rw = region.shape[:2]
 
     hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
@@ -133,34 +148,52 @@ def has_accept_button(img_bgr) -> tuple[bool, dict]:
 class AcceptConfirmationStateMachine:
     """Подтверждает сигнал кнопки «Принять» серией стабильных опросов.
 
-    Одиночный ложный срабатывание анализа экрана не должно отправлять
+    Одиночное ложное срабатывание анализа экрана не должно отправлять
     уведомление: кнопка должна оставаться на экране `confirmations` опросов
-    подряд. Повторное подтверждение в пределах cooldown подавляется.
+    подряд. Кратковременные мерцания (анимация затухания кнопки) не завершают
+    эпизод — для этого нужно `absence_polls` подряд опросов без кнопки.
+    Событие эмитится один раз за эпизод; повторно — только после того, как
+    кнопка реально исчезла и появилась заново (отмена матча + новый поиск).
     """
 
-    def __init__(self, confirmations: int = 3, cooldown_seconds: float = 90.0):
+    def __init__(self, confirmations: int = 3, absence_polls: int = 4):
         self._confirmations = max(1, confirmations)
-        self._cooldown_seconds = cooldown_seconds
+        self._absence_polls = max(1, absence_polls)
         self._positive_count = 0
-        self._last_emit_at: float | None = None
+        self._absent_count = 0
+        self._emitted_for_episode = False
+        self._episode_absent_since: float | None = None
 
-    def observe(self, has_accept: bool, now: float) -> bool:
+    def observe(self, has_accept: bool, now: float) -> tuple[bool, bool]:
+        """Обрабатывает один опрос. Возвращает (emit, fresh).
+
+        emit — серия подтверждена и это первое срабатывание за эпизод.
+        fresh — перед появлением кнопки она отсутствовала достаточно долго,
+        чтобы считать событие новым матчем (а не мерцанием того же диалога).
+        """
         if not has_accept:
+            self._absent_count += 1
             self._positive_count = 0
-            return False
+            if self._absent_count >= self._absence_polls:
+                self._emitted_for_episode = False
+                self._episode_absent_since = now
+            return False, False
+        self._absent_count = 0
         self._positive_count += 1
-        if self._positive_count < self._confirmations:
-            return False
-        if (
-            self._last_emit_at is not None
-            and now - self._last_emit_at < self._cooldown_seconds
-        ):
-            return False
-        self._last_emit_at = now
-        return True
+        if self._positive_count < self._confirmations or self._emitted_for_episode:
+            return False, False
+        self._emitted_for_episode = True
+        fresh = (
+            self._episode_absent_since is None
+            or now - self._episode_absent_since >= 2.0
+        )
+        return True, fresh
 
     def reset(self) -> None:
         self._positive_count = 0
+        self._absent_count = 0
+        self._emitted_for_episode = False
+        self._episode_absent_since = None
 
 
 class AcceptUiDetector(BaseDetector):
@@ -178,14 +211,12 @@ class AcceptUiDetector(BaseDetector):
         self,
         sink,
         poll_interval_ms: int = 250,
-        cooldown_seconds: float = 90.0,
-        required_confirmations: int = 3,
+        required_confirmations: int = 2,
     ):
         super().__init__(sink)
         self._poll_interval = max(poll_interval_ms, 150) / 1000
         self._confirmation = AcceptConfirmationStateMachine(
             confirmations=required_confirmations,
-            cooldown_seconds=cooldown_seconds,
         )
 
     def run(self) -> None:
@@ -204,9 +235,17 @@ class AcceptUiDetector(BaseDetector):
         debug_dir = _project_root() / "logs" / "debug"
         while not self.stopping:
             try:
-                screenshot = pyautogui.screenshot()
+                screen_w, screen_h = pyautogui.size()
+                rx = int(screen_w * CENTER_X1_FRAC)
+                ry = int(screen_h * CENTER_Y1_FRAC)
+                rw = int(screen_w * (CENTER_X2_FRAC - CENTER_X1_FRAC))
+                rh = int(screen_h * (CENTER_Y2_FRAC - CENTER_Y1_FRAC))
+                # Захватываем только центральный регион: полный скриншот
+                # занимает ~100 мс, регион — в разы меньше.
+                screenshot = pyautogui.screenshot(region=(rx, ry, rw, rh))
                 img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
-                has_accept, stats = has_accept_button(img)
+                has_accept, stats = has_accept_button_in_region(img)
+                stats["screen_w"], stats["screen_h"] = screen_w, screen_h
                 now = time.time()
                 if now - last_heartbeat >= 10:
                     last_heartbeat = now
@@ -225,13 +264,18 @@ class AcceptUiDetector(BaseDetector):
                     # кадрам можно точно подкрутить пороги.
                     last_debug_save = now
                     _save_debug_frame(debug_dir, img)
-                if self._confirmation.observe(has_accept, now):
-                    log.info("Обнаружена кнопка «Принять» — матч найден")
+                emit, fresh = self._confirmation.observe(has_accept, now)
+                if emit:
+                    log.info(
+                        "Обнаружена кнопка «Принять» — матч найден%s",
+                        " (новый эпизод)" if fresh else " (тот же эпизод)",
+                    )
                     self.emit(
                         MatchEvent(
                             type=EventType.MATCH_FOUND,
                             source=self.name,
                             detected_at=now,
+                            extra={"fresh": fresh},
                         )
                     )
             except Exception:

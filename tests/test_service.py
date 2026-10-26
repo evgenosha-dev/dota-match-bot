@@ -53,6 +53,52 @@ def test_duplicate_match_found_is_suppressed(tmp_path: Path):
     assert len(telegram.sent) == 1
 
 
+def test_fresh_found_event_notifies_again(tmp_path: Path):
+    # Отмена матча + повторное нахождение: детектор помечает событие
+    # fresh=True, и окно дедупликации не должно его глушить.
+    service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
+
+    service.handle_event(found_event())
+    service.handle_event(found_event())
+    assert len(telegram.sent) == 1
+
+    fresh = replace(found_event(), extra={"fresh": True})
+    service.handle_event(fresh)
+
+    assert len(telegram.sent) == 2
+
+
+def test_non_fresh_duplicate_still_suppressed(tmp_path: Path):
+    service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
+
+    service.handle_event(found_event())
+    non_fresh = replace(found_event(), extra={"fresh": False})
+    service.handle_event(non_fresh)
+
+    assert len(telegram.sent) == 1
+
+
+def test_fresh_found_ignored_while_in_match(tmp_path: Path):
+    # Свежесть эпизода не отменяет проверку «уже в матче».
+    service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
+
+    service.handle_event(
+        MatchEvent(
+            type=EventType.MATCH_STARTED,
+            source="gsi",
+            detected_at=time.time(),
+            match_id="1",
+        )
+    )
+    fresh = replace(found_event(), extra={"fresh": True})
+    service.handle_event(fresh)
+
+    assert telegram.sent == []
+
+
 def test_foreground_source_does_not_notify(tmp_path: Path):
     service, telegram = make_service(tmp_path)
 

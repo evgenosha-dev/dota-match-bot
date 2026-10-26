@@ -3,6 +3,7 @@ import pytest
 from dota_bot.detectors.acceptwin import (
     AcceptConfirmationStateMachine,
     has_accept_button,
+    has_accept_button_in_region,
 )
 
 cv2 = pytest.importorskip("cv2")
@@ -58,54 +59,103 @@ def test_small_screen_rejected():
     assert found is False
 
 
-def test_single_observation_does_not_emit():
-    machine = AcceptConfirmationStateMachine(confirmations=3, cooldown_seconds=90.0)
+def test_region_analysis_matches_full_screen():
+    # Детектор в цикле опроса анализирует только вырезанный регион —
+    # результат должен совпадать с полным скриншотом.
+    img = _screen_with_green_button()
+    found_full, _ = has_accept_button(img)
+    h, w = img.shape[:2]
+    region = img[int(h * 0.30):int(h * 0.80), int(w * 0.20):int(w * 0.80)]
+    found_region, _ = has_accept_button_in_region(region)
+    assert found_full is True
+    assert found_region is True
 
-    assert machine.observe(True, now=0.0) is False
+
+def test_single_observation_does_not_emit():
+    machine = AcceptConfirmationStateMachine(confirmations=3)
+
+    assert machine.observe(True, now=0.0) == (False, False)
 
 
 def test_false_resets_confirmation_series():
-    machine = AcceptConfirmationStateMachine(confirmations=3, cooldown_seconds=90.0)
+    machine = AcceptConfirmationStateMachine(confirmations=3)
 
-    assert machine.observe(True, now=0.0) is False
-    assert machine.observe(True, now=0.25) is False
-    assert machine.observe(False, now=0.5) is False
+    assert machine.observe(True, now=0.0) == (False, False)
+    assert machine.observe(True, now=0.25) == (False, False)
+    assert machine.observe(False, now=0.5) == (False, False)
     # Серия сброшена: нужны три новых подряд.
-    assert machine.observe(True, now=0.75) is False
-    assert machine.observe(True, now=1.0) is False
-    assert machine.observe(True, now=1.25) is True
+    assert machine.observe(True, now=0.75) == (False, False)
+    assert machine.observe(True, now=1.0) == (False, False)
+    assert machine.observe(True, now=1.25)[0] is True
 
 
-def test_three_stable_observations_emit_once():
-    machine = AcceptConfirmationStateMachine(confirmations=3, cooldown_seconds=90.0)
+def test_stable_observations_emit_once_per_episode():
+    machine = AcceptConfirmationStateMachine(confirmations=3)
 
-    assert machine.observe(True, now=0.0) is False
-    assert machine.observe(True, now=0.25) is False
-    assert machine.observe(True, now=0.5) is True
-    # Дальше — в пределах cooldown, не должно быть повторного события.
-    assert machine.observe(True, now=0.75) is False
-    assert machine.observe(True, now=1.0) is False
+    assert machine.observe(True, now=0.0) == (False, False)
+    assert machine.observe(True, now=0.25) == (False, False)
+    emit, fresh = machine.observe(True, now=0.5)
+    assert emit is True and fresh is True  # первый эпизод всегда свежий
+    # Кнопка никуда не делась — повторной эмиссии быть не должно.
+    assert machine.observe(True, now=0.75) == (False, False)
+    assert machine.observe(True, now=1.0) == (False, False)
 
 
-def test_repeat_after_cooldown_emits_again():
-    machine = AcceptConfirmationStateMachine(confirmations=3, cooldown_seconds=90.0)
+def test_repeat_after_absence_emits_fresh_episode():
+    machine = AcceptConfirmationStateMachine(confirmations=3, absence_polls=4)
 
-    assert machine.observe(True, now=0.0) is False
-    assert machine.observe(True, now=0.25) is False
-    assert machine.observe(True, now=0.5) is True
-    assert machine.observe(True, now=100.0) is True
+    machine.observe(True, now=0.0)
+    machine.observe(True, now=0.25)
+    assert machine.observe(True, now=0.5)[0] is True
+    # Эпизод завершён: кнопка исчезла на 4 опроса подряд.
+    for i in range(4):
+        machine.observe(False, now=1.0 + i * 0.25)
+    # Поиск заново — новая кнопка.
+    assert machine.observe(True, now=4.0) == (False, False)
+    assert machine.observe(True, now=4.25) == (False, False)
+    emit, fresh = machine.observe(True, now=4.5)
+    assert emit is True
+    assert fresh is True  # отсутствовала больше 2 с — это новый матч
+
+
+def test_short_absence_is_not_a_new_episode():
+    machine = AcceptConfirmationStateMachine(confirmations=2, absence_polls=4)
+
+    machine.observe(True, now=0.0)
+    assert machine.observe(True, now=0.25)[0] is True
+    # Отсутствие подтверждено, но кнопка вернулась почти сразу (<2 с).
+    for i in range(4):
+        machine.observe(False, now=0.5 + i * 0.25)
+    assert machine.observe(True, now=1.5) == (False, False)
+    emit, fresh = machine.observe(True, now=1.75)
+    # Повторная эмиссия возможна, но сервис должен считать её не-fresh.
+    assert emit is True
+    assert fresh is False
+
+
+def test_brief_flicker_does_not_end_episode():
+    # Мерцание из-за анимации затухания (1-3 опроса без кнопки) не должно
+    # позволить детектору эмитить повторно в пределах того же эпизода.
+    machine = AcceptConfirmationStateMachine(confirmations=2, absence_polls=4)
+
+    machine.observe(True, now=0.0)
+    assert machine.observe(True, now=0.25)[0] is True
+    machine.observe(False, now=0.5)
+    machine.observe(False, now=0.75)
+    machine.observe(True, now=1.0)
+    assert machine.observe(True, now=1.25) == (False, False)
 
 
 def test_confirmations_less_than_one_behaves_as_one():
-    machine = AcceptConfirmationStateMachine(confirmations=0, cooldown_seconds=90.0)
+    machine = AcceptConfirmationStateMachine(confirmations=0)
 
-    assert machine.observe(True, now=0.0) is True
+    assert machine.observe(True, now=0.0) == (True, True)
 
 
 def test_reset_clears_series():
-    machine = AcceptConfirmationStateMachine(confirmations=3, cooldown_seconds=90.0)
+    machine = AcceptConfirmationStateMachine(confirmations=3)
 
     machine.observe(True, now=0.0)
     machine.observe(True, now=0.25)
     machine.reset()
-    assert machine.observe(True, now=0.5) is False
+    assert machine.observe(True, now=0.5) == (False, False)

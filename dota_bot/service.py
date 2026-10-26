@@ -60,7 +60,7 @@ class MatchService:
                     AcceptUiDetector(
                         self._queue,
                         poll_interval_ms=250,
-                        cooldown_seconds=90,
+                        required_confirmations=2,
                     )
                 )
             except Exception:
@@ -129,19 +129,26 @@ class MatchService:
         if self._match_started_at and now - self._match_started_at < 300:
             log.debug("Пропущено: матч был недавно")
             return
-        if self._last_found_at and now - self._last_found_at > FOUND_EXPIRE_SECONDS:
-            self.state.clear("match_found")
-            self._last_found_at = None
-        if self._last_found_at and now - self._last_found_at <= FOUND_EXPIRE_SECONDS:
+        fresh = bool(event.extra.get("fresh"))
+        key = "match_found"
+        if fresh:
+            # Кнопка исчезла и появилась заново (отмена матча + новый поиск):
+            # это точно новый матч, дедупликация по времени неуместна.
+            log.info("Новый эпизод кнопки «Принять» — уведомляем без окна дедупликации")
+        else:
+            if self._last_found_at and now - self._last_found_at > FOUND_EXPIRE_SECONDS:
+                self.state.clear("match_found")
+                self._last_found_at = None
+            if self._last_found_at and now - self._last_found_at <= FOUND_EXPIRE_SECONDS:
+                key = "match_found"
+                if not self.state.should_notify(key, FOUND_EXPIRE_SECONDS):
+                    log.info("Пропущено дублирующее уведомление о найденном матче")
+                    return
             key = "match_found"
-            if not self.state.should_notify(key, FOUND_EXPIRE_SECONDS):
+            window = max(self.config.dedupe_window_seconds, FOUND_SUPPRESS_SECONDS)
+            if not self.state.should_notify(key, window):
                 log.info("Пропущено дублирующее уведомление о найденном матче")
                 return
-        key = "match_found"
-        window = max(self.config.dedupe_window_seconds, FOUND_SUPPRESS_SECONDS)
-        if not self.state.should_notify(key, window):
-            log.info("Пропущено дублирующее уведомление о найденном матче")
-            return
         self.state.mark(key)
         self.state.bump("matches_found")
         remote = self.config.remote_control.enabled
