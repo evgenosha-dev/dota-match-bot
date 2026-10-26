@@ -47,6 +47,27 @@ def test_expired_pairing_code_cannot_be_used(tmp_path: Path, monkeypatch):
     assert store.claim(code, "12345") is False
 
 
+def test_default_code_never_expires(tmp_path: Path, monkeypatch):
+    store = PairingStore(tmp_path / "pairing.json")
+    store.load()
+    monkeypatch.setattr("dota_bot.pairing.time.time", lambda: 1000.0)
+    code = store.create_code()
+    monkeypatch.setattr("dota_bot.pairing.time.time", lambda: 1000.0 + 90 * 86400)
+
+    assert store.claim(code, "12345") is True
+    assert store.get_chat_id(code) == "12345"
+
+
+def test_create_code_reuses_unclaimed_code(tmp_path: Path):
+    store = PairingStore(tmp_path / "pairing.json")
+    store.load()
+    first = store.create_code()
+    second = store.create_code()
+
+    assert first == second
+    assert store.claim(second, "12345") is True
+
+
 def test_extract_start_code_from_telegram_update():
     update = {
         "update_id": 5,
@@ -76,14 +97,15 @@ def test_wait_for_pairing_claims_expected_code(tmp_path: Path):
     ]
 
 
-def test_wait_for_pairing_ignores_other_active_code(tmp_path: Path):
+def test_wait_for_pairing_ignores_wrong_code(tmp_path: Path):
     store = PairingStore(tmp_path / "pairing.json")
     store.load()
-    expected = store.create_code(ttl_seconds=180)
-    other = store.create_code(ttl_seconds=180)
+    expected = store.create_code()
+    # Неиспользованный код переиспользуется: второй create_code вернёт тот же.
+    assert store.create_code() == expected
     wrong_update = {
         "update_id": 20,
-        "message": {"text": f"/start {other}", "chat": {"id": 1111}},
+        "message": {"text": "/start 999999", "chat": {"id": 1111}},
     }
     correct_update = {
         "update_id": 21,
@@ -92,7 +114,6 @@ def test_wait_for_pairing_ignores_other_active_code(tmp_path: Path):
     client = PairingTelegram([[wrong_update], [correct_update]])
 
     assert _wait_for_pairing(client, store, expected, timeout_seconds=5) == "2222"
-    assert store.get_chat_id(other) is None
     assert store.get_chat_id(expected) == "2222"
 
 

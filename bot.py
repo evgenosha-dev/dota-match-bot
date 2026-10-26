@@ -40,10 +40,23 @@ log = logging.getLogger("dota_match_bot")
 
 
 def setup_logging(level: str) -> None:
+    fmt = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     logging.basicConfig(
         level=getattr(logging, level.upper(), logging.INFO),
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        format=fmt,
     )
+    # Дублируем лог в файл — в фоновом режиме (pythonw, без консоли) это
+    # единственный способ диагностики.
+    root = logging.getLogger()
+    if not any(isinstance(h, logging.FileHandler) for h in root.handlers):
+        try:
+            log_dir = PROJECT_ROOT / "logs"
+            log_dir.mkdir(exist_ok=True)
+            file_handler = logging.FileHandler(log_dir / "bot.log", encoding="utf-8")
+            file_handler.setFormatter(logging.Formatter(fmt))
+            root.addHandler(file_handler)
+        except OSError:
+            pass
 
 
 def load_or_fail(
@@ -97,13 +110,13 @@ def cmd_setup(args: argparse.Namespace) -> int:
     if not chat_id:
         store = PairingStore(config.pairing_path)
         store.load()
-        code = store.create_code(ttl_seconds=180)
+        code = store.create_code()
         print("\n" + "=" * 52)
         print(f"КОД ПРИВЯЗКИ: {code}")
         print("=" * 52)
         print("\n1. Открой @BflyDotaBot")
         print(f"2. Напиши: /start {code}")
-        print("3. Код одноразовый, действует 3 минуты")
+        print("3. Код одноразовый, срока действия нет")
         print("4. Мастер ждёт подтверждение автоматически")
         print("\nЖду привязку Telegram...")
         try:
@@ -112,7 +125,11 @@ def cmd_setup(args: argparse.Namespace) -> int:
             print(f"Не удалось дождаться Telegram: {exc}", file=sys.stderr)
             return 3
         if not chat_id:
-            print("Код не использован. Запусти setup заново.", file=sys.stderr)
+            print(
+                "Время ожидания вышло, но код остаётся действительным — "
+                "просто запусти setup ещё раз, новый код не понадобится.",
+                file=sys.stderr,
+            )
             return 2
         print(f"Привязан chat_id: {chat_id}")
     else:
@@ -268,7 +285,7 @@ def _wait_for_pairing(
             try:
                 client.send_message(
                     chat_id,
-                    "Код недействителен или истёк. Запусти setup заново и введи новый код.",
+                    "Такой код не найден или уже использован. Запусти setup ещё раз — мастер покажет действующий код.",
                 )
             except TelegramError:
                 pass
