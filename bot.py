@@ -20,7 +20,12 @@ from dota_bot.commands import (
     cmd_start as tg_cmd_start,
     on_callback as tg_on_callback,
 )
-from dota_bot.autostart import SingleInstance, install_autostart, start_background
+from dota_bot.autostart import (
+    SingleInstance,
+    install_autostart,
+    start_background,
+    stop_running_instance,
+)
 from dota_bot.config import (
     ConfigError,
     BotConfig,
@@ -109,6 +114,13 @@ def cmd_setup(args: argparse.Namespace) -> int:
         or config.telegram.chat_id
     )
     if not chat_id:
+        if sys.platform == "win32":
+            # Фоновый бот держит опрос getUpdates — одновременный опрос
+            # мастером даёт 409 Conflict. Останавливаем бота на время
+            # настройки, в конце мастер запустит его заново.
+            stopped_pid = stop_running_instance(PROJECT_ROOT)
+            if stopped_pid:
+                print("Остановлен фоновый бот (на время настройки, запустится снова в конце).")
         store = PairingStore(config.pairing_path)
         store.load()
         code = store.create_code()

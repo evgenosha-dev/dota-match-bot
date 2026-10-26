@@ -84,6 +84,38 @@ def start_background(project_root: Path) -> None:
     log.info("Фоновый процесс запущен: %s bot.py run", pythonw)
 
 
+def stop_running_instance(project_root: Path) -> int | None:
+    """Останавливает фоновый экземпляр бота, если он запущен.
+
+    Нужен мастеру настройки: одновременный опрос getUpdates ботом и мастером
+    даёт 409 Conflict от Telegram. Возвращает pid остановленного процесса.
+    """
+    lock_path = Path(project_root) / "run.lock"
+    try:
+        pid = int(lock_path.read_text(encoding="ascii").strip())
+    except (OSError, ValueError):
+        return None
+    try:
+        out = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
+            capture_output=True, text=True, timeout=10,
+        ).stdout.lower()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if "python" not in out:
+        return None
+    subprocess.run(
+        ["taskkill", "/PID", str(pid), "/F"],
+        capture_output=True, timeout=15,
+    )
+    log.info("Остановлен фоновый экземпляр бота (pid %s) на время настройки", pid)
+    try:
+        lock_path.unlink(missing_ok=True)
+    except OSError:
+        pass
+    return pid
+
+
 class SingleInstance:
     """Блокировка второго экземпляра бота через msvcrt.locking.
 
