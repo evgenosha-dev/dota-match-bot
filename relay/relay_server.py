@@ -25,7 +25,6 @@ import logging
 import os
 import secrets
 import sqlite3
-import string
 import time
 from pathlib import Path
 
@@ -46,8 +45,7 @@ WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET") or secrets.token_urlsafe(16)
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 DB_PATH = Path(os.environ.get("DB_PATH") or Path(__file__).with_name("relay.db"))
 API = "https://api.telegram.org"
-CODE_ALPHABET = string.ascii_uppercase + "23456789"
-CODE_ALPHABET = "".join(c for c in CODE_ALPHABET if c not in "ILO01")
+CODE_LENGTH = 8
 
 app = Flask(__name__)
 _bot_username: str | None = None
@@ -86,8 +84,13 @@ def init_db() -> None:
 
 
 def new_code() -> str:
-    raw = "".join(secrets.choice(CODE_ALPHABET) for _ in range(8))
+    raw = "".join(secrets.choice("0123456789") for _ in range(CODE_LENGTH))
     return f"{raw[:4]}-{raw[4:]}"
+
+
+def normalize_code(text: str) -> str:
+    """Код привязки: только цифры, тире/пробелы игнорируются."""
+    return "".join(ch for ch in text if ch.isdigit())
 
 
 # ── Telegram API ──
@@ -174,6 +177,13 @@ def pair_create():
         else:
             code = row["code"]
             chat_id = row["chat_id"]
+            if normalize_code(code) != code.replace("-", ""):
+                # старый буквенный код → заменяем на цифровой
+                code = new_code()
+                conn.execute(
+                    "UPDATE sessions SET code = ? WHERE token = ?",
+                    (code, token),
+                )
     return jsonify({"code": code, "chat_id": chat_id, "bot_username": bot_username()})
 
 
@@ -298,9 +308,14 @@ def answer():
 # ── webhook Telegram ──
 
 def bind_chat(code: str, chat_id: str) -> bool:
-
+    code = normalize_code(code)
+    if not code:
+        return False
     with db() as conn:
-        row = conn.execute("SELECT * FROM sessions WHERE code = ?", (code,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM sessions WHERE replace(replace(code, '-', ''), ' ', '') = ?",
+            (code,),
+        ).fetchone()
         if row is None or row["chat_id"]:
             return False
         conn.execute(
@@ -327,7 +342,7 @@ def add_event(chat_id: str, kind: str, **payload) -> None:
         )
 
 
-@app.post(f"/telegram/{WEBHOOK_SECRET}")
+@app.post("/telegram/<secret>")
 def telegram_webhook(secret: str):
     if secret != WEBHOOK_SECRET:
         return jsonify({"error": "forbidden"}), 403
@@ -343,7 +358,7 @@ def telegram_webhook(secret: str):
         parts = text.split()
         command = parts[0].split("@", 1)[0].lower() if parts else ""
         if command == "/start" and len(parts) > 1:
-            code = parts[1].strip().upper()
+            code = parts[1].strip()
             if not bind_chat(code, chat_id):
                 try:
                     tg_call(
