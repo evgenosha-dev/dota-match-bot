@@ -59,36 +59,43 @@ Telegram ── webhook ──► Релей (бесплатный хостин�
 - Без сервера можно пользоваться в одиночку — мастер предложит создать
   своего бота через @BotFather (токен вводится локально).
 
-### Бесплатный хостинг релея (Hugging Face Spaces)
+### Бесплатный хостинг релея (PythonAnywhere EU)
 
-Подойдёт любой хостинг с Python + Flask; ниже — вариант без карты и VPN.
+Подойдёт любой хостинг с Python + Flask; ниже — проверенный бесплатный вариант
+без карты. Важно: регистрируйся именно на **eu.pythonanywhere.com** — обычный
+pythonanywhere.com недоступен из некоторых сетей.
 
-1. Зарегистрируйся на [huggingface.co](https://huggingface.co) (можно через Google/GitHub).
-2. **Settings → Access Tokens → New token** — создай токен с правом **Write**
-   и сохрани его (показывается один раз). Токен никому не отправляй — только
-   вводи сам на сайте или в скрипт развёртывания.
-3. Создай Space: **New Space** → имя (например `dota-relay`), License `mit`,
-   SDK **Docker**.
-4. В Space открой **Settings → Secrets and variables → Space secrets** и
-   добавь четыре секрета (они не попадают в код и видны только серверу):
-   - `TELEGRAM_TOKEN` — токен общего бота из @BotFather;
-   - `BASE_URL` — `https://ТВОЯ_ЗАПИСЬ.hf.space` (твой логин и имя Space);
-   - `ADMIN_KEY` — случайная строка (например, из `python -c "import secrets;print(secrets.token_urlsafe(16))"`);
-   - `WEBHOOK_SECRET` — ещё одна случайная строка (чтобы адрес webhook не угадали).
-5. Загрузи в Space три файла из `relay/`: `Dockerfile`, `relay_server.py`,
-   `requirements.txt` (кнопка **Files** → **Add file**, либо `git push`
-   в клон Space: `git clone https://huggingface.co/spaces/ТВОЯ_ЗАПИСЬ/dota-relay`).
-   ВАЖНО: файлы Space публичные — никогда не вписывай токены в сам Dockerfile.
-6. Space пересоберётся и запустится; релей сам установит webhook у общего
-   бота. Проверка: открой `https://ТВОЯ_ЗАПИСЬ.hf.space/health` — должен
-   ответить JSON с `bot_username`.
-   Важно: при пересборке Space (новая загрузка файлов) база привязок
-   обнуляется — после обновления файлов друзьям нужно пройти мастер заново.
+1. Зарегистрируй бесплатный Beginner-аккаунт на
+   [eu.pythonanywhere.com](https://eu.pythonanywhere.com/registration/register/beginner/)
+   и подтверди email.
+2. **Files** → создай каталог `dota-relay` и загрузи в него из этого
+   репозитория `relay/relay_server.py` (requirements.txt не нужен: релей
+   использует только flask, он уже установлен на хостинге).
+3. **Web** → **Add a new web app** → Manual configuration → Python 3.12
+   (или 3.13). Открой WSGI-файл и замени его содержимое на:
+   ```python
+   import os, sys
+   os.environ.setdefault("TELEGRAM_TOKEN", "ТОКЕН_ОБЩЕГО_БОТА")
+   os.environ.setdefault("BASE_URL", "https://ТВОЁ_ИМЯ.eu.pythonanywhere.com")
+   os.environ.setdefault("ADMIN_KEY", "СЛУЧАЙНАЯ_СТРОКА")
+   os.environ.setdefault("WEBHOOK_SECRET", "ЕЩЁ_ОДНА_СЛУЧАЙНАЯ_СТРОКА")
+   sys.path.insert(0, "/home/ТВОЁ_ИМЯ/dota-relay")
+   from relay_server import app as application
+   ```
+   Случайные строки сгенерируй командой
+   `python -c "import secrets;print(secrets.token_urlsafe(16))"`.
+   Файл WSGI приватный — видишь его только ты.
+4. **Reload** веб-приложения: релей сам установит webhook у общего бота.
+   Проверка: открой `https://ТВОЁ_ИМЯ.eu.pythonanywhere.com/health` — должен
+   ответить `{"ok": true, "bot_username": "…"}`.
+   Если в ответе ошибка соединения с Telegram — добавь `api.telegram.org`
+   в белый список: **Account → Allowlisted sites** (ограничение бесплатного
+   тарифа; на EU-серверах обычно работает и без этого).
 
 ### Как друзья подключаются
 
 1. Друг клонирует репозиторий и запускает `.\install.bat`.
-2. На шаге 1 вводит адрес твоего релея (`https://ТВОЯ_ЗАПИСЬ.hf.space`).
+2. На шаге 1 вводит адрес твоего релея (`https://ТВОЁ_ИМЯ.eu.pythonanywhere.com`).
 3. Мастер покажет код — друг пишет его общему боту (`/start КОД`) и получает
    уведомления только у себя.
 

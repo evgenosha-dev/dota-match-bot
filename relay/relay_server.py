@@ -9,7 +9,8 @@
   во входящие, которые агенты забирают опросом.
 
 Развёртывание: любой хостинг с Python + Flask (см. README, бесплатный
-вариант — Hugging Face Spaces через Docker). Переменные окружения:
+вариант — PythonAnywhere EU). Зависимости: только Flask (стандартный
+urllib вместо httpx для запросов к Telegram). Переменные окружения:
 
     TELEGRAM_TOKEN   токен общего бота (хранится ТОЛЬКО здесь)
     BASE_URL         публичный адрес сервиса, напр. https://user.pythonanywhere.com
@@ -28,7 +29,9 @@ import string
 import time
 from pathlib import Path
 
-import httpx
+import urllib.error
+import urllib.request
+
 from flask import Flask, jsonify, request
 
 logging.basicConfig(
@@ -92,13 +95,18 @@ def new_code() -> str:
 def tg_call(method: str, **payload) -> dict:
     if not TELEGRAM_TOKEN:
         raise RuntimeError("TELEGRAM_TOKEN не задан")
-    response = httpx.post(
+    body = json.dumps({k: v for k, v in payload.items() if v is not None}).encode("utf-8")
+    req = urllib.request.Request(
         f"{API}/bot{TELEGRAM_TOKEN}/{method}",
-        json={k: v for k, v in payload.items() if v is not None},
-        timeout=15.0,
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
     )
-    response.raise_for_status()
-    data = response.json()
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"Telegram API {method}: HTTP {exc.code}") from exc
     if not data.get("ok"):
         raise RuntimeError(f"Telegram API {method}: {data.get('description')}")
     return data
@@ -149,22 +157,24 @@ def require_admin() -> bool:
 
 @app.post("/pair")
 def pair_create():
-    session = require_session()
-    if isinstance(session, tuple):
-        return session
+    token = bearer_token()
+    if not token:
+        return jsonify({"error": "unauthorized"}), 401
     with db() as conn:
         row = conn.execute(
-            "SELECT * FROM sessions WHERE token = ?", (session["token"],)
+            "SELECT * FROM sessions WHERE token = ?", (token,)
         ).fetchone()
         if row is None:
             code = new_code()
             conn.execute(
                 "INSERT INTO sessions(token, code, chat_id, created_at) VALUES (?, ?, NULL, ?)",
-                (session["token"], code, time.time()),
+                (token, code, time.time()),
             )
+            chat_id = None
         else:
             code = row["code"]
-    return jsonify({"code": code, "chat_id": None, "bot_username": bot_username()})
+            chat_id = row["chat_id"]
+    return jsonify({"code": code, "chat_id": chat_id, "bot_username": bot_username()})
 
 
 @app.get("/pair")
