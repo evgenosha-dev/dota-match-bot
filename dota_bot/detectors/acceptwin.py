@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import time
 
+from ..input_control import is_process_running
 from ..models import EventType, MatchEvent
 from .base import BaseDetector
 
@@ -230,12 +231,30 @@ class AcceptUiDetector(BaseDetector):
         sink,
         poll_interval_ms: int = 250,
         required_confirmations: int = 2,
+        process_names: list[str] | None = None,
     ):
         super().__init__(sink)
         self._poll_interval = max(poll_interval_ms, 150) / 1000
         self._confirmation = AcceptConfirmationStateMachine(
             confirmations=required_confirmations,
         )
+        # Ворота: анализируем экран, только когда Dota 2 запущена. Экран
+        # другой игры тоже может содержать похожую зелёную кнопку — без
+        # этой проверки такая кнопка выглядела бы как «матч найден».
+        self._process_names = [n for n in (process_names or []) if n.strip()]
+        self._last_gate_logged: bool | None = None
+
+    def _dota_running(self) -> bool:
+        if not self._process_names:
+            return True
+        for name in self._process_names:
+            running = is_process_running(name)
+            if running:
+                return True
+            if running is None:
+                # Платформа без поддержки Win32 — не блокируем анализ.
+                return True
+        return False
 
     def run(self) -> None:
         try:
@@ -247,12 +266,30 @@ class AcceptUiDetector(BaseDetector):
                 exc,
             )
             return
-        log.info("Детектор кнопки «Принять» запущен: анализ экрана каждые %.0f мс", self._poll_interval * 1000)
+        log.info(
+            "Детектор кнопки «Принять» запущен: анализ экрана каждые %.0f мс, "
+            "ворота по процессу: %s",
+            self._poll_interval * 1000,
+            ", ".join(self._process_names) if self._process_names else "выключены",
+        )
         last_heartbeat = 0.0
         last_debug_save = 0.0
         debug_dir = _project_root() / "logs" / "debug"
         while not self.stopping:
             try:
+                if not self._dota_running():
+                    # Dota не запущена: сбрасываем серию подтверждений,
+                    # чтобы накопленные «кнопки» другой игры не всплыли
+                    # потом при запуске Dota, и ничего не эмитим.
+                    self._confirmation.observe(False, time.time())
+                    if self._last_gate_logged is not False:
+                        self._last_gate_logged = False
+                        log.info("Dota 2 не запущена — анализ экрана приостановлен")
+                    time.sleep(self._poll_interval)
+                    continue
+                if self._last_gate_logged is False:
+                    self._last_gate_logged = True
+                    log.info("Dota 2 запущена — анализ экрана возобновлён")
                 screen_w, screen_h = pyautogui.size()
                 rx = int(screen_w * CENTER_X1_FRAC)
                 ry = int(screen_h * CENTER_Y1_FRAC)

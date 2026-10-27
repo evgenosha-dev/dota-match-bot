@@ -170,6 +170,25 @@ class Win32InputController:
         user32.keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0)
 
 
+_controller: Win32InputController | None = None
+
+
+def is_process_running(process_name: str) -> bool | None:
+    """Проверяет, запущен ли процесс. None — платформа без поддержки Win32."""
+    global _controller
+    if sys.platform != "win32":
+        return None
+    if _controller is None:
+        _controller = Win32InputController()
+    if not _controller.available:
+        return None
+    try:
+        return _controller.find_pid(process_name) is not None
+    except Exception:
+        log.debug("is_process_running: ошибка перечисления процессов", exc_info=True)
+        return None
+
+
 def accept_match(
     process_name: str = "dota2.exe",
     focus_window: bool = True,

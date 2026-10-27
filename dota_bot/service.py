@@ -63,6 +63,7 @@ class MatchService:
                         self._queue,
                         poll_interval_ms=250,
                         required_confirmations=2,
+                        process_names=[cfg.remote_control.process_name],
                     )
                 )
             except Exception:

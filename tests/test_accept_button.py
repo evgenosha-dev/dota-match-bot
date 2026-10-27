@@ -196,3 +196,26 @@ def test_reset_clears_series():
     machine.observe(True, now=0.25)
     machine.reset()
     assert machine.observe(True, now=0.5) == (False, False)
+
+
+def test_gate_blocks_screen_analysis_when_dota_not_running(monkeypatch):
+    # Когда Dota 2 не запущена, детектор не должен считать экран «кнопкой»,
+    # даже если на экране другой игры есть похожий зелёный элемент.
+    import queue
+
+    from dota_bot.detectors import acceptwin
+
+    monkeypatch.setattr(acceptwin, "is_process_running", lambda name: False)
+    detector = acceptwin.AcceptUiDetector(queue.Queue(), process_names=["dota2.exe"])
+    assert detector._dota_running() is False
+
+    monkeypatch.setattr(acceptwin, "is_process_running", lambda name: True)
+    assert detector._dota_running() is True
+
+    # Неизвестная платформа (None) не блокирует анализ.
+    monkeypatch.setattr(acceptwin, "is_process_running", lambda name: None)
+    assert detector._dota_running() is True
+
+    # Без списка процессов ворота выключены.
+    open_gate = acceptwin.AcceptUiDetector(queue.Queue(), process_names=[])
+    assert open_gate._dota_running() is True
