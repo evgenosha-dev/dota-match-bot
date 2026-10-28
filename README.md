@@ -44,7 +44,7 @@ cd dota-match-bot
 .\.venv\Scripts\python.exe bot.py setup
 ```
 
-## Друзьям
+## Простая установка
 
 Проще всего — готовый файл, ничего ставить не нужно:
 
