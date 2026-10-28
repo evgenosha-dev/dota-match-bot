@@ -41,6 +41,10 @@ class GsiSnapshot:
     hero: str | None = None
     hero_id: int | None = None
     player_name: str | None = None
+    # Account ID (32-bit) из блока player — позволяет отличить матч,
+    # где играешь сам, от просмотра чужого матча (в spectate блок
+    # player относится к игроку, за которым наблюдаешь).
+    steam_id: str | None = None
     kills: int | None = None
     deaths: int | None = None
     assists: int | None = None
@@ -102,6 +106,7 @@ def parse_gsi_payload(payload: dict[str, Any], received_at: float | None = None)
         hero=hero_name,
         hero_id=_as_int(hero.get("id")),
         player_name=_as_str(player.get("name")),
+        steam_id=_as_str(player.get("steamid")),
         kills=_as_int(player.get("kills")),
         deaths=_as_int(player.get("deaths")),
         assists=_as_int(player.get("assists")),
@@ -212,9 +217,11 @@ class GsiDetector(BaseDetector):
 
     name = "gsi"
 
-    def __init__(self, sink, host: str = "127.0.0.1", port: int = 9977):
+    def __init__(self, sink, host: str = "127.0.0.1", port: int = 9977,
+                 account_id: int | None = None):
         super().__init__(sink)
         self._snapshot: GsiSnapshot | None = None
+        self._account_id = account_id
         self._in_match = False
         self._notified_started = False
         self._notified_finished = False
@@ -222,6 +229,16 @@ class GsiDetector(BaseDetector):
         self._last_state: str | None = None
         self._seen_payload = False
         self._server = GsiServer(host, port, on_payload=self._handle_payload)
+
+    def _is_own_match(self, snapshot: GsiSnapshot) -> bool:
+        """True, если в матче играет сам пользователь, а не чужой матч на просмотре."""
+        if self._account_id is None or snapshot.steam_id is None:
+            # Не можем проверить — сохраняем прежнее поведение.
+            return True
+        try:
+            return int(snapshot.steam_id) == self._account_id
+        except (TypeError, ValueError):
+            return True
 
     @property
     def snapshot(self) -> GsiSnapshot | None:
@@ -250,6 +267,7 @@ class GsiDetector(BaseDetector):
             self._current_match_id = snapshot.match_id
 
         if snapshot.in_match:
+            own = self._is_own_match(snapshot)
             if not self._notified_started:
                 self._notified_started = True
                 self._in_match = True
@@ -271,12 +289,14 @@ class GsiDetector(BaseDetector):
                         assists=snapshot.assists,
                         gpm=snapshot.gpm,
                         xpm=snapshot.xpm,
+                        extra={"own": own},
                     )
                 )
             return
 
         if (snapshot.finished or snapshot.terminated) and self._in_match and not self._notified_finished:
             self._notified_finished = True
+            own = self._is_own_match(snapshot)
             victory: bool | None = None
             if snapshot.win_team and snapshot.win_team != "none" and snapshot.team:
                 victory = snapshot.win_team.lower() == snapshot.team.lower()
@@ -300,6 +320,7 @@ class GsiDetector(BaseDetector):
                     assists=snapshot.assists,
                     gpm=snapshot.gpm,
                     xpm=snapshot.xpm,
+                    extra={"own": own},
                 )
             )
 

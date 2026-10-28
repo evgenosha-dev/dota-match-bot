@@ -27,6 +27,9 @@ FINISHED_DEDUPE_SECONDS = 21600
 # кнопки. Свежий эпизод (окно «Принять» исчезло и появилось новое) всегда
 # уведомляет — иначе отменённый и мгновенно перезапущенный поиск терялся.
 FOUND_REPEAT_WINDOW_SECONDS = 60
+# Минимальный разрыв между уведомлением и повторным эпизодом кнопки,
+# чтобы считать его новым попом после отмены (а не мерцанием анимации).
+REPOLL_NOTIFY_MIN_GAP_SECONDS = 5.0
 
 # Уведомление «матч найден» отправляется только при обнаружении реальной
 # кнопки «Принять» через UI Automation. Сигналы вроде «Dota вышла на
@@ -52,6 +55,10 @@ class MatchService:
         self._match_started_at: float | None = None
         self._last_found_at: float | None = None
         self._found_match_id: str | None = None
+        # True после отправки «матч найден», пока непонятно, состоится ли
+        # матч. Если кнопка появляется снова, а в матч мы не вошли — это
+        # повторный поп после отмены: уведомляем в любом случае.
+        self._accept_pending = False
 
     # ── детекторы ──
     def build_detectors(self) -> None:
@@ -69,7 +76,14 @@ class MatchService:
             except Exception:
                 log.debug("Не удалось добавить acceptwin детектор", exc_info=True)
         if cfg.gsi.enabled:
-            self._detectors.append(GsiDetector(self._queue, host=cfg.gsi.host, port=cfg.gsi.port))
+            self._detectors.append(
+                GsiDetector(
+                    self._queue,
+                    host=cfg.gsi.host,
+                    port=cfg.gsi.port,
+                    account_id=cfg.resolved_account_id,
+                )
+            )
         if cfg.steam.enabled and cfg.resolved_steamid64:
             self._detectors.append(
                 SteamDetector(
@@ -133,7 +147,19 @@ class MatchService:
             log.debug("Пропущено: матч был недавно")
             return
         fresh = bool(event.extra.get("fresh"))
-        if fresh:
+        # Порог против мерцания: повторный эпизод в первые пару секунд после
+        # уведомления — это анимация затухания кнопки, а не новый матч.
+        repop_after_decline = (
+            self._accept_pending
+            and self._last_found_at is not None
+            and now - self._last_found_at >= REPOLL_NOTIFY_MIN_GAP_SECONDS
+        )
+        if repop_after_decline:
+            # Прошлый матч не состоялся (кто-то не принял), а кнопка
+            # появилась снова — новый поп, уведомляем в любом случае,
+            # независимо от окна дедупликации.
+            log.info("Кнопка «Принять» снова — прошлый матч не состоялся, уведомляем повторно")
+        elif fresh:
             # Кнопка исчезла и появилась заново (отмена матча + новый поиск):
             # это новый матч — уведомляем всегда, окно дедупликации неуместно.
             log.info("Новый эпизод кнопки «Принять» — уведомляем без окна дедупликации")
@@ -153,17 +179,25 @@ class MatchService:
         }
         self._last_found_at = now
         self._found_match_id = event.match_id
+        self._accept_pending = True
         self.state.set_last_event(
             {"type": event.type.value, "source": event.source, "at": event.detected_at}
         )
         self.state.save()
 
     def _handle_match_started(self, event: MatchEvent) -> None:
-        self._in_match = True
-        self._match_started_at = time.time()
+        # own=False — просмотр чужого матча: уведомления не подавляем,
+        # сообщение о принятии не трогаем.
+        own = bool(event.extra.get("own", True))
+        self._accept_pending = False
+        if own:
+            self._in_match = True
+            self._match_started_at = time.time()
         self._last_found_at = None
         self._found_match_id = None
         self.state.clear("match_found")
+        if not own:
+            return
         if not self._last_found_message or not self._last_found_message.get("message_id"):
             return
         enriched = event
@@ -216,13 +250,11 @@ class MatchService:
         return
 
     def _handle_match_finished(self, event: MatchEvent) -> None:
-        self._in_match = False
-        self._match_started_at = time.time()
-        self._last_found_at = None
-        self._found_match_id = None
-        self.state.clear("match_found")
-        self._in_match = False
-        self._match_started_at = None
+        own = bool(event.extra.get("own", True))
+        self._accept_pending = False
+        if own:
+            self._in_match = False
+            self._match_started_at = None
         self._last_found_at = None
         self._found_match_id = None
         self.state.clear("match_found")

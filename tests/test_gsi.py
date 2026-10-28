@@ -96,3 +96,34 @@ def test_detector_resets_on_new_match():
 
     event = sink.get_nowait()
     assert event.match_id == "1111111111"
+
+
+def test_parse_extracts_player_steamid():
+    from dota_bot.detectors.gsi import parse_gsi_payload
+
+    payload = {
+        "map": {"matchid": "123", "game_state": "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS"},
+        "player": {"team_name": "radiant", "name": "X", "steamid": "389318685"},
+        "hero": {"name": "npc_dota_hero_axe", "id": 2},
+    }
+    snapshot = parse_gsi_payload(payload)
+    assert snapshot.steam_id == "389318685"
+    assert snapshot.in_match is True
+
+
+def test_own_match_detection():
+    from dota_bot.detectors.gsi import GsiDetector, GsiSnapshot
+
+    own = GsiDetector(queue.Queue(), account_id=389318685)
+    foreign = GsiDetector(queue.Queue(), account_id=389318685)
+    unknown = GsiDetector(queue.Queue())
+
+    snap_own = GsiSnapshot(received_at=0.0, steam_id="389318685")
+    snap_foreign = GsiSnapshot(received_at=0.0, steam_id="111222333")
+    snap_no_player = GsiSnapshot(received_at=0.0, steam_id=None)
+
+    assert own._is_own_match(snap_own) is True
+    assert own._is_own_match(snap_foreign) is False
+    assert own._is_own_match(snap_no_player) is True  # нет данных — старое поведение
+    assert foreign._is_own_match(snap_foreign) is False
+    assert unknown._is_own_match(snap_foreign) is True  # без account_id не проверяем

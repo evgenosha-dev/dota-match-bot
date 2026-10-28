@@ -317,3 +317,66 @@ def test_status_counters(tmp_path: Path):
     assert status["matches_finished"] == 1
     assert status["notifications_sent"] == 2
     assert status["last_event"]["type"] == "match_finished"
+
+
+def started_event(own: bool = True) -> MatchEvent:
+    return MatchEvent(
+        type=EventType.MATCH_STARTED,
+        source="gsi",
+        detected_at=time.time(),
+        extra={"own": own},
+    )
+
+
+def test_repop_after_decline_notifies_again(tmp_path: Path):
+    # Матч не состоялся (кнопка исчезла без старта матча), новый поп пришёл
+    # через несколько секунд: эпизод может быть помечен не-fresh, но
+    # уведомление обязано прийти — иначе игрок пропустит новый матч.
+    service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
+
+    service.handle_event(found_event())
+    assert len(telegram.sent) == 1
+    # Кнопка появилась снова через 10 секунд, fresh=False.
+    service._last_found_at -= 10
+    repeat = found_event()
+    repeat.extra["fresh"] = False
+    service.handle_event(repeat)
+
+    assert len(telegram.sent) == 2
+
+
+def test_immediate_repeat_is_treated_as_flicker(tmp_path: Path):
+    # Повторный эпизод в первые 5 секунд — мерцание анимации, а не новый матч.
+    service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
+
+    service.handle_event(found_event())
+    service.handle_event(found_event())
+
+    assert len(telegram.sent) == 1
+
+
+def test_spectate_match_started_keeps_notifications(tmp_path: Path):
+    # Просмотр чужого матча (own=False) не должен включать режим «в матче»:
+    # уведомления продолжают приходить.
+    service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
+
+    service.handle_event(started_event(own=False))
+    assert service._in_match is False
+
+    service.handle_event(found_event())
+    assert len(telegram.sent) == 1
+
+
+def test_own_match_started_suppresses_found(tmp_path: Path):
+    # Свой матч — уведомления о «найденном матче» подавляются до конца игры.
+    service, telegram = make_service(tmp_path)
+    service.config.telegram.notify_match_finished = False
+
+    service.handle_event(started_event(own=True))
+    assert service._in_match is True
+
+    service.handle_event(found_event())
+    assert telegram.sent == []
