@@ -9,7 +9,12 @@ import threading
 import time
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+# В собранном exe (PyInstaller) __file__ указывает во временную папку
+# распаковки — конфиг, логи и run.lock должны лежать рядом с exe.
+if getattr(sys, "frozen", False):
+    PROJECT_ROOT = Path(sys.executable).resolve().parent
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parent
 
 # Сервер привязки (общий бот). Зашит в код, чтобы пользователю не приходилось
 # ничего вводить; переопределяется только явно (CLI/переменная окружения).
