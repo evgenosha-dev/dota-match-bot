@@ -236,9 +236,12 @@ class GsiDetector(BaseDetector):
             # Не можем проверить — сохраняем прежнее поведение.
             return True
         try:
-            return int(snapshot.steam_id) == self._account_id
+            sid = int(snapshot.steam_id)
         except (TypeError, ValueError):
             return True
+        # GSI отдаёт 64-bit SteamID; в конфиге — 32-bit account_id.
+        # Принимаем оба вида, чтобы не зависеть от формата.
+        return sid == self._account_id or sid == 76561197960265728 + self._account_id
 
     @property
     def snapshot(self) -> GsiSnapshot | None:

@@ -124,6 +124,9 @@ def test_own_match_detection():
 
     assert own._is_own_match(snap_own) is True
     assert own._is_own_match(snap_foreign) is False
+    # GSI отдаёт 64-bit SteamID — это тоже свой матч.
+    snap64 = GsiSnapshot(received_at=0.0, steam_id=str(76561197960265728 + 389318685))
+    assert own._is_own_match(snap64) is True
     assert own._is_own_match(snap_no_player) is True  # нет данных — старое поведение
     assert foreign._is_own_match(snap_foreign) is False
     assert unknown._is_own_match(snap_foreign) is True  # без account_id не проверяем
