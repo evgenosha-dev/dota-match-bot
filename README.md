@@ -10,7 +10,16 @@ Telegram-бот, который сообщает, что в **Dota 2 найде�
 
 ## Установка (Windows)
 
-Нужны Git и Python 3.10+.
+### Что поставить заранее
+
+1. **Git**: скачай с [git-scm.com/download/win](https://git-scm.com/download/win)
+   и установи с настройками по умолчанию.
+2. **Python 3.10+**: скачай с [python.org/downloads](https://www.python.org/downloads/)
+   и при установке **обязательно поставь галочку «Add python.exe to PATH»**.
+3. **Терминал**: нажми правой кнопкой по кнопке «Пуск» → **Терминал (или
+   Windows PowerShell)** — команды ниже вводятся туда.
+
+### Команды
 
 ```powershell
 git clone https://github.com/evgenosha-dev/dota-match-bot.git
